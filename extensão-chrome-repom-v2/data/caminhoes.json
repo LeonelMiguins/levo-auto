@@ -1,0 +1,185 @@
+{
+	"MMF": {
+        "motorista": "VALDINEI ANDERSON",
+        "transportadora": "MARIA ELIZANE",
+        "placa": "MMF8A29"
+    },
+    "APR": {
+        "motorista": "ADRIANO TABORDA",
+        "transportadora": "M A WELTER",
+        "placa": "APR0G69"
+    },
+    "AVG": {
+        "motorista": "ROSENILDO TABORDA",
+        "transportadora": "TRANSPORTADORA SAO JOSE",
+        "placa": "AVG3424"
+    },
+    "PLP": {
+        "motorista": "VALDENI MANICA",
+        "transportadora": "TRANSPORTES AGUIA",
+        "placa": "PLP7J86"
+    },
+    "LRK": {
+        "motorista": "WELLINGTON BRUNO",
+        "transportadora": "TALINI TRANSPORTES",
+        "placa": "LRK4J78"
+    },
+	"ARW": {
+        "motorista": "CESAR TALINI",
+        "transportadora": "TALINI TRANSPORTES",
+        "placa": "ARW1227"
+    },
+    "AXG": {
+        "motorista": "CARLOS",
+        "transportadora": "AVANILDO ALCANTARA TRANSPORTES LTDA",
+        "placa": "AXG4B79"
+    },
+    "AUU": {
+        "motorista": "ANDRE LUIZ",
+        "transportadora": "TALINI TRANSPORTES",
+        "placa": "AUU5F73"
+    },
+    "ASW": {
+        "motorista": "PEDRO PEREIRA",
+        "transportadora": "JAIR CENCI",
+        "placa": "ASW3G48"
+    },
+    "MJD": {
+        "motorista": "LEONARDO TALINI",
+        "transportadora": "ADILSON JOAO TALINI",
+        "placa": "MJD9E08",
+        "empresa": 40080
+    },
+    "RAD": {
+        "motorista": "ELENILSON",
+        "transportadora": "MARIA",
+        "placa": "RAD4C17"
+    },
+    "AWD": {
+        "motorista": "CELSO DOS",
+        "transportadora": "JHONATAN CRISTIAN",
+        "placa": "AWD6I57"
+    },
+    "AUG": {
+        "motorista": "JEANICE LEONIR",
+        "transportadora": "JAIR CENCI",
+        "placa": "AUG0D75"
+    },
+    "AWL": {
+        "motorista": "GIAN",
+        "transportadora": "JHONATAN CRISTIAN FONTANELLA",
+        "placa": "AWL0J10"
+    },
+    "QIF": {
+        "motorista": "ENOIR FELIPE",
+        "transportadora": "ADILSON JOAO",
+        "placa": "QIF5B75",
+        "empresa": 40080
+    },
+    "MIO": {
+        "motorista": "IOVANDRO",
+        "transportadora": "MARIA",
+        "placa": "MIO8D71"
+    },
+    "BCT": {
+        "motorista": "LUIZ FERNANDO",
+        "transportadora": "TRANSPRIME TRANSPORTES RODOVIARIOS LTDA",
+        "placa": "BCT0A52"
+    },
+    "BAR": {
+        "motorista": "ADRIEL MARCELO",
+        "transportadora": "TRANSPRIME TRANSPORTES RODOVIARIOS LTDA",
+        "placa": "BAR1E52"
+    },
+    "ATV10": {
+        "motorista": "ANTHONY",
+        "transportadora": "TRANSPRIME TRANSPORTES RODOVIARIOS LTDA",
+        "placa": "ATV1A09"
+    },
+    "ATV15": {
+        "motorista": "EDUARDO",
+        "transportadora": "TRANSPRIME TRANSPORTES RODOVIARIOS LTDA",
+        "placa": "ATV1F09"
+    },
+    "AUZ90": {
+        "motorista": "LEANDRO PEREIRA",
+        "transportadora": "TRANSPORTADORA SAO JOSE",
+        "placa": "AUZ9050"
+    },
+    "ASO": {
+        "motorista": "JOAREZ",
+        "transportadora": "JAIR",
+        "placa": "ASO1H39"
+    },
+    "AZO": {
+        "motorista": "ADAIR MALACARNE",
+        "transportadora": "MARLICE TEREZINHA",
+        "placa": "AZO8J66"
+    },
+    "ARU": {
+        "motorista": "CLAUDENIR",
+        "transportadora": "EDVIGES",
+        "placa": "ARU8F51"
+    },
+    "AWS": {
+        "motorista": "PEDRO ALMEIDA",
+        "transportadora": "TRANSPORTES AGUIA",
+        "placa": "AWS5F33"
+    },
+    "EVK": {
+        "motorista": "RONALDO",
+        "transportadora": "EDVIGES",
+        "placa": "EVK2G96"
+    },
+    "MKG": {
+        "motorista": "BRUNO GUERRA",
+        "transportadora": "EDVIGES",
+        "placa": "MKG2B62"
+    },
+    "AWP": {
+        "motorista": "GUILHERME LUIZ",
+        "transportadora": "MARIA ELIZANE",
+        "placa": "AWP2E84"
+    },
+    "AVR": {
+        "motorista": "MURILO",
+        "transportadora": "TRANSPRIME",
+        "placa": "AVR5A25"
+    },
+    "OKG": {
+        "motorista": "LUCAS SANTOS",
+        "transportadora": "TRANSPORTES AGUIA",
+        "placa": "OKG0D41"
+    },
+    "AVF": {
+        "motorista": "CLAUDOIR",
+        "transportadora": "EDVIGES",
+        "placa": "AVF7I28"
+    },
+    "AXE": {
+        "motorista": "LUCAS TALINI",
+        "transportadora": "TRANSPORTADORA",
+        "placa": "AXE2E54"
+    },
+    "AUZ3D": {
+        "motorista": "JHONATAN CRISTIAN",
+        "transportadora": "JHONATAN CRISTIAN",
+        "placa": "AUZ3D96"
+    },
+    "BAA": {
+        "motorista": "ALMIR",
+        "transportadora": "ADILSON",
+        "placa": "BAA4J53",
+        "empresa": 40080
+    },
+    "AEN": {
+        "motorista": "DENNER",
+        "transportadora": "TALINI TRANSPORTES",
+        "placa": "AEN4A55"
+    },
+    "API": {
+        "motorista": "JOAO MATHEUS",
+        "transportadora": "TRANSPRIME",
+        "placa": "API4F33"
+    }
+}

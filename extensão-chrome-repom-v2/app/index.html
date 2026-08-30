@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=0.9">
+    <title>Pedagio Auto</title>
+    <link rel="stylesheet" href="app.css">
+</head>
+<body class="bloqueado">
+    <section id="loginView" class="login-shell">
+        <form id="loginForm" class="login-card">
+            <p class="eyebrow">Acesso</p>
+            <h1>Pedagio Auto</h1>
+            <p>Entre em contato: leomiguins@gmail.com</p>
+
+            <label>
+                Usuario
+                <input id="loginNome" autocomplete="username" required>
+            </label>
+
+            <label>
+                Senha
+                <input id="loginSenha" type="password" autocomplete="current-password" required>
+            </label>
+
+            <p id="loginStatus" class="login-status">Entre para iniciar a automacao.</p>
+            <button class="primary" type="submit">Entrar</button>
+        </form>
+    </section>
+
+    <main id="appView" class="shell">
+        <section class="header">
+            <div>
+                <p class="eyebrow">LEVO ALIMENTOS - Automacao operacional </p>
+                <h1>PEDAGIO AUTO</h1>
+                <p id="usuarioSessao" class="session-info"></p>
+            </div>
+            <div class="header-actions">
+                <button id="btnLimpar" class="ghost" type="button">Limpar</button>
+                <button id="btnSair" class="ghost" type="button">Sair</button>
+            </div>
+        </section>
+
+        <div class="workspace">
+            <div class="main-column">
+                <section class="panel">
+                    <label class="dropzone" for="xmlInput">
+                        <span>Selecionar XML das notas</span>
+                        <small>Voce pode escolher uma ou mais NF-e do mesmo servico.</small>
+                    </label>
+                    <input id="xmlInput" type="file" accept=".xml,text/xml,application/xml" multiple>
+                </section>
+
+                <section id="status" class="status empty">
+                    Nenhum XML carregado.
+                </section>
+
+                <section class="grid">
+                    <label>
+                        Placa / codigo
+                        <input id="placa" autocomplete="off" placeholder="Ex.: MJD9E08">
+                        <small id="placaAviso" class="field-alert" hidden>Placa nao encontrada</small>
+                    </label>
+                    <label>
+                        Cidade destino
+                        <input id="cidade" autocomplete="off" placeholder="Cidade da NF">
+                    </label>
+                    <label>
+                        Nota inicial
+                        <input id="nota" autocomplete="off" placeholder="Numero da primeira NF">
+                    </label>
+                    <label>
+                        Quantidade
+                        <input id="quantidade" type="number" min="0" step="1">
+                    </label>
+                </section>
+
+                <section class="panel">
+                    <h2>Dados extraidos</h2>
+                    <dl class="summary">
+                        <div><dt>Produtor</dt><dd id="produtor">-</dd></div>
+                        <div><dt>Empresa emissora</dt><dd id="emitente">-</dd></div>
+                        <div><dt>Municipio</dt><dd id="municipio">-</dd></div>
+                        <div><dt>Distancia ida</dt><dd id="kmPagamento">-</dd></div>
+                        <div><dt>Notas</dt><dd id="notas">-</dd></div>
+                        <div><dt>Peso total</dt><dd id="peso">-</dd></div>
+                        <div><dt>Valor total</dt><dd id="valor">-</dd></div>
+                    </dl>
+                </section>
+
+                <section class="actions">
+                    <label class="check">
+                        <input id="autoConfirmar" type="checkbox">
+                        <span>Autoconfirmar no Repom</span>
+                    </label>
+                    <label class="check">
+                        <input id="semPedagio" type="checkbox">
+                        <span>Sem pedagio</span>
+                    </label>
+                    <button id="btnSalvar" type="button">Salvar temporario</button>
+                    <button id="btnRepom" class="primary" type="button" disabled>Fazer Repom</button>
+                </section>
+            </div>
+
+            <aside class="cte-panel">
+                <h2>Pedagio emitido</h2>
+                <dl class="summary cte-summary">
+                    <div><dt>Nº pedagio</dt><dd id="repomNumeroPedagio">-</dd></div>
+                    <div><dt>Nº meio pagamento</dt><dd id="repomMeioPagamento">-</dd></div>
+                    <div><dt>Valor pedagio</dt><dd id="repomValor">-</dd></div>
+                    <div><dt>Empresa Repom</dt><dd id="repomEmpresa">-</dd></div>
+                </dl>
+                <button id="btnCte" class="primary" type="button" disabled>Fazer CTE</button>
+
+                <section class="history-section">
+                    <h2>Historico</h2>
+                    <div id="historicoPedagios" class="history-list">
+                        Nenhum pedagio emitido.
+                    </div>
+                </section>
+            </aside>
+        </div>
+    </main>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>

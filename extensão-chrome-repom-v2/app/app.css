@@ -1,0 +1,398 @@
+:root {
+    color-scheme: light;
+    font-family: Segoe UI, Arial, sans-serif;
+    background: #f4f7fb;
+    color: #172033;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: #f4f7fb;
+}
+
+body.bloqueado #appView {
+    display: none;
+}
+
+body:not(.bloqueado) #loginView {
+    display: none;
+}
+
+.login-shell {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+}
+
+.login-card {
+    width: min(420px, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 28px;
+    background: #ffffff;
+    border: 1px solid #dbe3ef;
+    border-radius: 8px;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, .10);
+}
+
+.login-status {
+    min-height: 20px;
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.login-status.error {
+    color: #b42318;
+}
+
+.shell {
+    width: min(1240px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 32px 0;
+}
+
+.header,
+.actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.header {
+    margin-bottom: 24px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.session-info {
+    margin: 8px 0 0;
+    color: #64748b;
+    font-size: 19px;
+    font-weight: 700;
+
+}
+
+.eyebrow {
+    margin: 0 0 4px;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+h1,
+h2 {
+    margin: 0;
+}
+
+h1 {
+    font-size: 34px;
+}
+
+h2 {
+    font-size: 18px;
+    margin-bottom: 16px;
+}
+
+.panel,
+.status,
+.grid,
+.cte-panel {
+    background: #ffffff;
+    border: 1px solid #dbe3ef;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.panel {
+    padding: 20px;
+}
+
+.workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 16px;
+    align-items: start;
+}
+
+.cte-panel {
+    position: sticky;
+    top: 20px;
+    padding: 20px;
+}
+
+.dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 150px;
+    border: 2px dashed #94a3b8;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.dropzone span {
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.dropzone small {
+    color: #64748b;
+}
+
+#xmlInput {
+    display: none;
+}
+
+.status {
+    padding: 14px 16px;
+    color: #0f5132;
+    background: #ecfdf3;
+    border-color: #b6e2c3;
+}
+
+.status.empty {
+    color: #475569;
+    background: #ffffff;
+    border-color: #dbe3ef;
+}
+
+.status.error {
+    color: #842029;
+    background: #fff1f2;
+    border-color: #fecdd3;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    padding: 20px;
+}
+
+label {
+    color: #334155;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+input {
+    width: 100%;
+    height: 42px;
+    margin-top: 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 0 12px;
+    color: #172033;
+    font-size: 15px;
+}
+
+input:focus {
+    border-color: #0ea5e9;
+    outline: 3px solid rgba(14, 165, 233, .18);
+}
+
+.field-alert {
+    display: block;
+    margin-top: 4px;
+    color: #b42318;
+    font-size: 11px;
+    font-weight: 200;
+}
+
+.field-alert[hidden] {
+    display: none;
+}
+
+input.field-error {
+    border-color: #f04438;
+}
+
+.summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+}
+
+.cte-summary {
+    grid-template-columns: 1fr;
+    margin-bottom: 16px;
+}
+
+.history-section {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.history-list {
+    display: grid;
+    gap: 10px;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.history-item {
+    display: grid;
+    gap: 4px;
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.history-item strong {
+    color: #172033;
+    font-size: 14px;
+}
+
+.history-item span {
+    overflow-wrap: anywhere;
+}
+
+.summary div {
+    min-height: 72px;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+dt {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+dd {
+    margin: 6px 0 0;
+    font-size: 15px;
+    font-weight: 700;
+    word-break: break-word;
+}
+
+.producer-group {
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    display: grid;
+    gap: 4px;
+    margin-top: 8px;
+    padding: 10px;
+    border-color: #cbd5e1;
+    background: #ffffff;
+    text-align: left;
+}
+
+.producer-group:first-child {
+    margin-top: 0;
+}
+
+.producer-group.selected {
+    border-color: #0369a1;
+    background: #eff6ff;
+}
+
+.producer-group strong,
+.producer-group span {
+    display: block;
+    overflow-wrap: anywhere;
+}
+
+.producer-group strong {
+    color: #172033;
+    font-size: 13px;
+}
+
+.producer-group span {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.actions {
+    padding-top: 6px;
+}
+
+.check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.check input {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+}
+
+button {
+    min-width: 132px;
+    height: 42px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #172033;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+button.primary {
+    border-color: #0369a1;
+    background: #0369a1;
+    color: #ffffff;
+}
+
+button.ghost {
+    min-width: 88px;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: .55;
+}
+
+@media (max-width: 760px) {
+    .header,
+    .actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .header-actions {
+        flex-direction: column;
+    }
+
+    .workspace,
+    .grid,
+    .summary {
+        grid-template-columns: 1fr;
+    }
+
+    .cte-panel {
+        position: static;
+    }
+
+    button {
+        width: 100%;
+    }
+}

@@ -1,0 +1,11 @@
+[
+  {
+    "nome": "usuario",
+    "senha": "senha-da-extensao",
+    "login_repom_plusval": "login-repom-plusval",
+    "senha_repom_plusval": "senha-repom-plusval",
+    "login_repom_pluma": "login-repom-pluma",
+    "senha_repom_pluma": "senha-repom-pluma",
+    "is_admin": false
+  }
+]

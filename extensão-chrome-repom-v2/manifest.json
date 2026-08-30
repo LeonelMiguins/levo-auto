@@ -1,0 +1,68 @@
+{
+  "manifest_version": 3,
+  "name": "Repom Automação",
+  "version": "2.0",
+
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs"
+  ],
+
+  "host_permissions": [
+    "*://www.repom.com.br/*",
+    "*://app.simplescte.com.br/*"
+  ],
+
+  "icons": {
+    "16": "icon/icon-16.png",
+    "32": "icon/icon-32.png",
+    "48": "icon/icon-48.png",
+    "128": "icon/icon-128.png"
+  },
+
+  "action": {
+    "default_title": "Abrir Automação",
+    "default_icon": {
+      "16": "icon/icon-16.png",
+      "32": "icon/icon-32.png",
+      "48": "icon/icon-48.png",
+      "128": "icon/icon-128.png"
+    }
+  },
+
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["*://www.repom.com.br/*"],
+      "js": ["content.js"],
+      "type": "module",
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://app.simplescte.com.br/*"],
+      "js": ["content.js"],
+      "type": "module",
+      "run_at": "document_idle"
+    }
+  ],
+
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "ui/*.js",
+        "automation/*.js",
+        "automation/repom/*.js",
+        "content/repom/*.js",
+        "content/simples-cte/*.js",
+        "shared/*.js",
+        "data/*.json"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

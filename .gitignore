@@ -1,0 +1,7 @@
+extensão-chrome-repom-v2/data/users.json
+extensão-chrome-repom-v2/app.zip
+*.exe
+*.zip
+node_modules/
+.DS_Store
+Thumbs.db
