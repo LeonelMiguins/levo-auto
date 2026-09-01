@@ -21,7 +21,7 @@ Automacao operacional em extensao Chrome para leitura de XML de NF-e, emissao de
 ## Estrutura principal
 
 ```txt
-extensão-chrome-repom-v2/
+extensao-levo-auto/
   app/                         Tela local da extensao
   app/services/                Servicos de XML, storage, sessao, dados e lancadores
   automation/                  Engine de automacao e rotinas do Repom
@@ -68,7 +68,7 @@ Formato de usuario:
 1. Acesse `chrome://extensions`.
 2. Ative o modo desenvolvedor.
 3. Clique em `Carregar sem compactacao`.
-4. Selecione a pasta `extensão-chrome-repom-v2`.
+4. Selecione a pasta `extensao-levo-auto`.
 
 ## Fluxo operacional
 
@@ -94,9 +94,8 @@ Formato de usuario:
 Para checar sintaxe dos scripts:
 
 ```powershell
-Get-ChildItem -Path "extensão-chrome-repom-v2" -Recurse -Filter *.js | ForEach-Object {
+Get-ChildItem -Path "extensao-levo-auto" -Recurse -Filter *.js | ForEach-Object {
   node --check $_.FullName
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 ```
-

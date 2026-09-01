@@ -79,6 +79,7 @@ export async function limparServicoTemporario() {
     await chrome.storage.local.remove([
         STORAGE_KEYS.servicoAtual,
         STORAGE_KEYS.repomPendente,
-        STORAGE_KEYS.repomPedagioEmitido
+        STORAGE_KEYS.repomPedagioEmitido,
+        STORAGE_KEYS.simplesCtePendente
     ]);
 }

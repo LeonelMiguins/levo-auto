@@ -22,6 +22,7 @@ export function extrairNfe(xmlTexto, nomeArquivo) {
     return {
         arquivo: nomeArquivo,
         chave: ler("chNFe") || (infNFe.getAttribute("Id") || "").replace(/^NFe/, ""),
+        xmlTexto,
         numero: ler("nNF"),
         serie: ler("serie"),
         natureza: ler("natOp"),

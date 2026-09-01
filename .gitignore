@@ -1,5 +1,7 @@
 extensão-chrome-repom-v2/data/users.json
+extensao-levo-auto/data/users.json
 extensão-chrome-repom-v2/app.zip
+extensao-levo-auto/app.zip
 *.exe
 *.zip
 node_modules/

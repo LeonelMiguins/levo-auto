@@ -66,6 +66,10 @@ const repomEmitido = {
     historico: $("#historicoPedagios")
 };
 
+const processo = {
+    logs: $("#processLogs")
+};
+
 iniciar();
 
 async function iniciar() {
@@ -100,6 +104,7 @@ async function iniciar() {
         await restaurarServicoTemporario();
         aplicarPedagioEmitido(await obterPedagioEmitido());
         await aplicarHistoricoUsuario();
+        await atualizarLogsProcesso();
     } else {
         bloquearAplicacao();
     }
@@ -148,6 +153,7 @@ function bloquearAplicacao() {
     login.usuarioSessao.textContent = "";
     setLoginStatus("Entre para iniciar a automacao.", false);
     aplicarHistorico([]);
+    renderizarLogsProcesso();
 }
 
 async function sair() {
@@ -200,6 +206,7 @@ async function importarXmls(event) {
 
         aplicarServicoNaTela(servico);
         await salvarServicoAtual(servico);
+        await atualizarLogsProcesso();
 
         const variosDestinos = (servico.destinoPedagio?.destinos || []).length > 1;
         const mensagemKm = valorExiste(servico.kmPagamento)
@@ -253,6 +260,7 @@ async function salvarTemporario() {
 
     await salvarServicoAtual(servico);
     aplicarServicoNaTela(servico);
+    await atualizarLogsProcesso();
     setStatus("Servico salvo temporariamente.", "ok");
 }
 
@@ -286,6 +294,7 @@ async function fazerRepom() {
     const acao = aba.reutilizada ? "reutilizada" : "aberta";
 
     setStatus(`Servico enviado para o Repom. A aba do Repom foi ${acao}.`, "ok");
+    await atualizarLogsProcesso();
 }
 
 async function fazerCte() {
@@ -319,6 +328,7 @@ async function fazerCte() {
     const acao = aba.reutilizada ? "reutilizada" : "aberta";
 
     setStatus(`Simples CTE ${acao}. Buscando empresa: ${servico.caminhao.transportadora}.`, "ok");
+    await atualizarLogsProcesso();
 }
 
 async function limparTudo() {
@@ -341,6 +351,7 @@ async function limparTudo() {
     });
 
     aplicarPedagioEmitido(null);
+    await atualizarLogsProcesso();
     validarPlacaNaTela();
     atualizarBotaoRepom();
     setStatus("Nenhum XML carregado.", "empty");
@@ -433,6 +444,14 @@ function atualizarQuandoStorageMudar(changes, areaName) {
         aplicarPedagioEmitido(changes[STORAGE_KEYS.repomPedagioEmitido].newValue || null);
     }
 
+    if (
+        changes[STORAGE_KEYS.servicoAtual] ||
+        changes[STORAGE_KEYS.repomPendente] ||
+        changes[STORAGE_KEYS.simplesCtePendente]
+    ) {
+        atualizarLogsProcesso();
+    }
+
     if (changes[STORAGE_KEYS.historicoPedagios]) {
         aplicarHistoricoUsuario();
     }
@@ -444,6 +463,7 @@ function aplicarPedagioEmitido(pedagio) {
     repomEmitido.valor.textContent = formatarValorRepom(pedagio?.valor);
     repomEmitido.empresa.textContent = pedagio?.empresa || "-";
     atualizarBotaoCte(pedagio);
+    atualizarLogsProcesso();
 }
 
 function atualizarBotaoCte(pedagioAtual = null) {
@@ -479,7 +499,76 @@ async function alternarSemPedagio() {
     }
 
     aplicarPedagioEmitido(campos.semPedagio.checked ? null : await obterPedagioEmitido());
+    await atualizarLogsProcesso();
     atualizarBotaoRepom();
+}
+
+async function atualizarLogsProcesso() {
+    if (!processo.logs) return;
+
+    const storage = await chrome.storage.local.get([
+        STORAGE_KEYS.servicoAtual,
+        STORAGE_KEYS.repomPendente,
+        STORAGE_KEYS.repomPedagioEmitido,
+        STORAGE_KEYS.simplesCtePendente
+    ]);
+
+    renderizarLogsProcesso({
+        servico: storage[STORAGE_KEYS.servicoAtual],
+        repomPendente: storage[STORAGE_KEYS.repomPendente],
+        pedagio: storage[STORAGE_KEYS.repomPedagioEmitido],
+        cte: storage[STORAGE_KEYS.simplesCtePendente]
+    });
+}
+
+function renderizarLogsProcesso(dados = {}) {
+    if (!processo.logs) return;
+
+    const { servico, repomPendente, pedagio, cte } = dados;
+    const semPedagio = Boolean(servico?.semPedagio || cte?.semPedagio);
+    const cteEtapa = cte?.etapa || "";
+    const produtoresErro = Boolean(cte?.erroProdutores || cte?.erroTomador);
+    const produtoresOk =
+        !produtoresErro &&
+        [
+            "dados_cte_conferidos",
+            "calculadora_frete_clicada",
+            "calculadora_frete_minimo_selecionada",
+            "calculadora_frete_calculada",
+            "informacoes_adicionais_preenchidas"
+        ].includes(cteEtapa);
+
+    const itens = [
+        {
+            texto: "Iniciando automacao",
+            status: servico || repomPendente || cte ? "ok" : "pending"
+        },
+        {
+            texto: semPedagio ? "Pedagio dispensado" : "Pedagio finalizado",
+            status: semPedagio || pedagio?.numeroPedagio ? "ok" : "pending"
+        },
+        {
+            texto: "CTE iniciado",
+            status: cte ? "ok" : "pending"
+        },
+        {
+            texto: produtoresErro ? "Produtores com erro: Tomador vazio ou DIVERSOS" : "Produtores carregados sem erro",
+            status: produtoresErro ? "error" : produtoresOk ? "ok" : "pending"
+        },
+        {
+            texto: "Valor do frete inserido",
+            status: ["calculadora_frete_calculada", "informacoes_adicionais_preenchidas"].includes(cteEtapa) ? "ok" : "pending"
+        }
+    ];
+
+    processo.logs.replaceChildren(
+        ...itens.map((item) => {
+            const linha = document.createElement("li");
+            linha.className = `process-log ${item.status}`;
+            linha.textContent = item.texto;
+            return linha;
+        })
+    );
 }
 
 async function aplicarHistoricoUsuario() {

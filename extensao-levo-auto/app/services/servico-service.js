@@ -126,6 +126,19 @@ function extrairChavesAcesso(nfs = []) {
         .filter(Boolean);
 }
 
+function extrairArquivosXml(nfs = []) {
+    if (!Array.isArray(nfs)) return [];
+
+    return nfs
+        .filter((nf) => nf.xmlTexto)
+        .map((nf) => ({
+            nome: nf.arquivo || `${nf.chave || nf.numero || "nota"}.xml`,
+            conteudo: nf.xmlTexto,
+            chave: nf.chave || "",
+            numero: nf.numero || ""
+        }));
+}
+
 function agruparNfsPorProdutor(nfs, contexto) {
     const grupos = new Map();
 
@@ -164,6 +177,7 @@ function montarGrupoProdutor(grupo, contexto) {
         quantidade: grupo.nfs.length,
         notas: grupo.nfs.map((nf) => nf.numero).filter(Boolean),
         chavesAcesso: extrairChavesAcesso(grupo.nfs),
+        arquivosXml: extrairArquivosXml(grupo.nfs),
         pesoTotal: soma(grupo.nfs, "pesoLiquido") || soma(grupo.nfs, "quantidade"),
         valorTotal: soma(grupo.nfs, "valor"),
         distanciaPagamento: produtorKm?.distancia ?? produtorKm?.distanciaPagamento ?? produtorKm?.kmPagamento ?? null,
@@ -192,6 +206,7 @@ function resumirGrupoProdutor(grupo) {
         cidade: grupo.cidade,
         quantidade: grupo.quantidade,
         notas: grupo.notas,
+        arquivosXml: grupo.arquivosXml,
         pesoTotal: grupo.pesoTotal,
         valorTotal: grupo.valorTotal,
         distanciaPagamento: grupo.distanciaPagamento,
