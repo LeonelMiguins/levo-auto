@@ -13,7 +13,8 @@ export const STORAGE_KEYS = {
     repomLogin: "repomAutoLoginEstado",
     repomPedagioEmitido: "repomPedagioEmitido",
     historicoPedagios: "pedagioAutoHistoricoPedagios",
-    simplesCtePendente: "simplesCteAutomacaoPendente"
+    simplesCtePendente: "simplesCteAutomacaoPendente",
+    mdfePendente: "mdfeAutomacaoPendente"
 };
 
 export const SESSAO_DURACAO_MS = 5 * 60 * 60 * 1000;

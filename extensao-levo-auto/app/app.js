@@ -8,11 +8,13 @@ import { abrirOuReutilizarAbaRepom } from "./services/repom-launcher.js";
 import { criarSessao, limparSessao, obterSessaoValida, salvarSessao } from "./services/session-service.js";
 import { montarServico, montarServicoManual } from "./services/servico-service.js";
 import {
+    limparEtapasAutomacao,
     limparServicoTemporario,
     obterHistoricoPedagiosUsuario,
     obterPedagioEmitido,
     obterServicoAtual,
     salvarServicoAtual,
+    salvarMdfePendente,
     salvarServicoRepomPendente,
     salvarSimplesCtePendente
 } from "./services/storage-service.js";
@@ -36,6 +38,7 @@ const campos = {
     nota: $("#nota"),
     quantidade: $("#quantidade"),
     autoConfirmar: $("#autoConfirmar"),
+    autoConfirmarCte: $("#autoConfirmarCte"),
     semPedagio: $("#semPedagio")
 };
 
@@ -63,6 +66,7 @@ const repomEmitido = {
     valor: $("#repomValor"),
     empresa: $("#repomEmpresa"),
     btnCte: $("#btnCte"),
+    btnMdfe: $("#btnMdfe"),
     historico: $("#historicoPedagios")
 };
 
@@ -90,10 +94,12 @@ async function iniciar() {
     campos.cidade.addEventListener("input", atualizarBotaoRepom);
     campos.nota.addEventListener("input", atualizarBotaoRepom);
     campos.quantidade.addEventListener("input", atualizarBotaoRepom);
+    campos.autoConfirmarCte.addEventListener("change", salvarOpcoesAutomacao);
     campos.semPedagio.addEventListener("change", alternarSemPedagio);
     $("#btnSalvar").addEventListener("click", salvarTemporario);
     $("#btnRepom").addEventListener("click", fazerRepom);
     $("#btnCte").addEventListener("click", fazerCte);
+    $("#btnMdfe").addEventListener("click", fazerMdfe);
     $("#btnLimpar").addEventListener("click", limparTudo);
     chrome.storage.onChanged.addListener(atualizarQuandoStorageMudar);
 
@@ -204,6 +210,8 @@ async function importarXmls(event) {
         estado.nfs = nfs.sort((a, b) => Number(a.numero || 0) - Number(b.numero || 0));
         const servico = montarServico(estado.nfs, criarContextoServico());
 
+        await limparEtapasAutomacao();
+        aplicarPedagioEmitido(null);
         aplicarServicoNaTela(servico);
         await salvarServicoAtual(servico);
         await atualizarLogsProcesso();
@@ -228,6 +236,7 @@ function aplicarServicoNaTela(servico) {
     campos.nota.value = servico.nota || "";
     campos.quantidade.value = servico.quantidade || 0;
     campos.autoConfirmar.checked = Boolean(servico.autoConfirmar ?? servico.autoImprimir);
+    campos.autoConfirmarCte.checked = Boolean(servico.autoConfirmarCte);
     campos.semPedagio.checked = Boolean(servico.semPedagio);
 
     estado.grupoCteSelecionadoId = obterGrupoSelecionado(servico)?.id || servico.grupoCteSelecionadoId || "";
@@ -302,7 +311,12 @@ async function fazerCte() {
 
     const pedagio = await obterPedagioEmitido();
     const servicoBase = await obterServicoAtual();
-    const servico = prepararServicoParaCte(servicoBase);
+    const servicoAtualizado = montarServicoManual(
+        servicoBase || {},
+        obterValoresTela(),
+        criarContextoServico()
+    );
+    const servico = prepararServicoParaCte(servicoAtualizado);
     const semPedagio = Boolean(servico?.semPedagio || campos.semPedagio.checked);
 
     if (!semPedagio && (!pedagio?.numeroPedagio || !pedagio?.numeroMeioPagamento || !pedagio?.valor || !pedagio?.empresa)) {
@@ -328,6 +342,36 @@ async function fazerCte() {
     const acao = aba.reutilizada ? "reutilizada" : "aberta";
 
     setStatus(`Simples CTE ${acao}. Buscando empresa: ${servico.caminhao.transportadora}.`, "ok");
+    await atualizarLogsProcesso();
+}
+
+async function fazerMdfe() {
+    const sessao = await exigirSessao();
+    const servicoBase = await obterServicoAtual();
+    const servicoAtualizado = montarServicoManual(
+        servicoBase || {},
+        obterValoresTela(),
+        criarContextoServico()
+    );
+    const servico = prepararServicoParaCte(servicoAtualizado);
+
+    if (!servico?.cidade || !servico?.nota || !servico?.quantidade) {
+        setStatus("Carregue ou salve os dados da nota antes de fazer o MDF-e.", "error");
+        return;
+    }
+
+    if (!servico?.caminhao?.transportadora) {
+        setStatus("Transportadora do caminhao nao encontrada na base.", "error");
+        return;
+    }
+
+    await salvarServicoAtual(servico);
+    await salvarMdfePendente(servico, sessao);
+
+    const aba = await abrirOuReutilizarAbaSimplesCte();
+    const acao = aba.reutilizada ? "reutilizada" : "aberta";
+
+    setStatus(`Simples CTE ${acao}. Buscando CTe correto para gerar MDF-e.`, "ok");
     await atualizarLogsProcesso();
 }
 
@@ -364,6 +408,7 @@ function obterValoresTela() {
         nota: campos.nota.value,
         quantidade: campos.quantidade.value,
         autoConfirmar: campos.autoConfirmar.checked,
+        autoConfirmarCte: campos.autoConfirmarCte.checked,
         semPedagio: campos.semPedagio.checked
     };
 }
@@ -371,6 +416,7 @@ function obterValoresTela() {
 function criarContextoServico() {
     return {
         autoConfirmar: campos.autoConfirmar.checked,
+        autoConfirmarCte: campos.autoConfirmarCte.checked,
         semPedagio: campos.semPedagio.checked,
         buscarCaminhao,
         buscarProdutorKm
@@ -378,13 +424,25 @@ function criarContextoServico() {
 }
 
 function buscarCaminhao(valor) {
-    const busca = String(valor || "").toUpperCase().trim();
+    const busca = normalizarPlacaOuCodigo(valor);
 
     if (!busca) return null;
 
     return estado.caminhoes[busca] ||
-        Object.values(estado.caminhoes).find((caminhao) => caminhao.placa === busca) ||
+        Object.entries(estado.caminhoes)
+            .find(([codigo, caminhao]) =>
+                normalizarPlacaOuCodigo(codigo) === busca ||
+                normalizarPlacaOuCodigo(caminhao?.placa) === busca ||
+                (busca.length >= 3 && normalizarPlacaOuCodigo(caminhao?.placa).startsWith(busca))
+            )?.[1] ||
         null;
+}
+
+function normalizarPlacaOuCodigo(valor) {
+    return String(valor || "")
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, "")
+        .trim();
 }
 
 function validarPlacasDasNotas(nfs) {
@@ -475,6 +533,7 @@ function atualizarBotaoCte(pedagioAtual = null) {
 
     if (campos.semPedagio.checked) {
         repomEmitido.btnCte.disabled = !dadosNotaOk;
+        atualizarBotaoMdfe();
         return;
     }
 
@@ -485,22 +544,31 @@ function atualizarBotaoCte(pedagioAtual = null) {
         pedagioAtual?.empresa;
 
     repomEmitido.btnCte.disabled = !pedagioOk;
+    atualizarBotaoMdfe();
+}
+
+function atualizarBotaoMdfe() {
+    repomEmitido.btnMdfe.disabled = false;
 }
 
 async function alternarSemPedagio() {
+    await salvarOpcoesAutomacao();
+    aplicarPedagioEmitido(campos.semPedagio.checked ? null : await obterPedagioEmitido());
+    await atualizarLogsProcesso();
+    atualizarBotaoRepom();
+}
+
+async function salvarOpcoesAutomacao() {
     const servicoAtual = await obterServicoAtual();
 
     if (servicoAtual) {
         await salvarServicoAtual({
             ...servicoAtual,
             semPedagio: campos.semPedagio.checked,
-            autoConfirmar: campos.autoConfirmar.checked
+            autoConfirmar: campos.autoConfirmar.checked,
+            autoConfirmarCte: campos.autoConfirmarCte.checked
         });
     }
-
-    aplicarPedagioEmitido(campos.semPedagio.checked ? null : await obterPedagioEmitido());
-    await atualizarLogsProcesso();
-    atualizarBotaoRepom();
 }
 
 async function atualizarLogsProcesso() {
@@ -510,24 +578,27 @@ async function atualizarLogsProcesso() {
         STORAGE_KEYS.servicoAtual,
         STORAGE_KEYS.repomPendente,
         STORAGE_KEYS.repomPedagioEmitido,
-        STORAGE_KEYS.simplesCtePendente
+        STORAGE_KEYS.simplesCtePendente,
+        STORAGE_KEYS.mdfePendente
     ]);
 
     renderizarLogsProcesso({
         servico: storage[STORAGE_KEYS.servicoAtual],
         repomPendente: storage[STORAGE_KEYS.repomPendente],
         pedagio: storage[STORAGE_KEYS.repomPedagioEmitido],
-        cte: storage[STORAGE_KEYS.simplesCtePendente]
+        cte: storage[STORAGE_KEYS.simplesCtePendente],
+        mdfe: storage[STORAGE_KEYS.mdfePendente]
     });
 }
 
 function renderizarLogsProcesso(dados = {}) {
     if (!processo.logs) return;
 
-    const { servico, repomPendente, pedagio, cte } = dados;
+    const { servico, repomPendente, pedagio, cte, mdfe } = dados;
     const semPedagio = Boolean(servico?.semPedagio || cte?.semPedagio);
     const cteEtapa = cte?.etapa || "";
     const produtoresErro = Boolean(cte?.erroProdutores || cte?.erroTomador);
+    const freteErro = Boolean(cte?.erroFrete || cte?.erroKm);
     const produtoresOk =
         !produtoresErro &&
         [
@@ -535,7 +606,8 @@ function renderizarLogsProcesso(dados = {}) {
             "calculadora_frete_clicada",
             "calculadora_frete_minimo_selecionada",
             "calculadora_frete_calculada",
-            "informacoes_adicionais_preenchidas"
+            "informacoes_adicionais_preenchidas",
+            "cte_salvo_emitido"
         ].includes(cteEtapa);
 
     const itens = [
@@ -548,7 +620,7 @@ function renderizarLogsProcesso(dados = {}) {
             status: semPedagio || pedagio?.numeroPedagio ? "ok" : "pending"
         },
         {
-            texto: "CTE iniciado",
+            texto: cteEtapa === "cte_salvo_emitido" ? "CTE emitido" : "CTE iniciado",
             status: cte ? "ok" : "pending"
         },
         {
@@ -556,8 +628,12 @@ function renderizarLogsProcesso(dados = {}) {
             status: produtoresErro ? "error" : produtoresOk ? "ok" : "pending"
         },
         {
-            texto: "Valor do frete inserido",
-            status: ["calculadora_frete_calculada", "informacoes_adicionais_preenchidas"].includes(cteEtapa) ? "ok" : "pending"
+            texto: freteErro ? "Frete com erro: KM do produtor nao encontrado" : "Valor do frete inserido",
+            status: freteErro ? "error" : ["calculadora_frete_calculada", "informacoes_adicionais_preenchidas", "cte_salvo_emitido"].includes(cteEtapa) ? "ok" : "pending"
+        },
+        {
+            texto: mdfe?.erro ? `MDFe com erro: ${mdfe.erro}` : "MDFe iniciado",
+            status: mdfe?.erro ? "error" : mdfe ? "ok" : "pending"
         }
     ];
 
@@ -667,13 +743,20 @@ async function selecionarGrupoProdutorCte(grupoId) {
 function prepararServicoParaCte(servico) {
     if (!servico) return null;
 
+    const caminhao = servico.caminhao?.transportadora ?
+        servico.caminhao :
+        buscarCaminhao(servico.codigo || servico.placa || servico.caminhao?.placa || campos.placa.value);
     const grupos = Array.isArray(servico.gruposProdutores) ? servico.gruposProdutores : [];
     const grupo = obterGrupoSelecionado(servico);
+    const servicoComCaminhao = {
+        ...servico,
+        caminhao
+    };
 
-    if (!grupo || !grupos.length) return servico;
+    if (!grupo || !grupos.length) return servicoComCaminhao;
 
     return {
-        ...servico,
+        ...servicoComCaminhao,
         grupoCteSelecionadoId: grupo.id,
         gruposCte: grupos.map(semNfsInternasGrupo),
         grupoCte: semNfsInternasGrupo(grupo),

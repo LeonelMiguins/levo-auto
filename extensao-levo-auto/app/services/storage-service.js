@@ -23,6 +23,15 @@ export async function salvarServicoAtual(servico) {
     });
 }
 
+export async function limparEtapasAutomacao() {
+    await chrome.storage.local.remove([
+        STORAGE_KEYS.repomPendente,
+        STORAGE_KEYS.repomPedagioEmitido,
+        STORAGE_KEYS.simplesCtePendente,
+        STORAGE_KEYS.mdfePendente
+    ]);
+}
+
 export async function salvarServicoRepomPendente(servico, sessao) {
     const agora = Date.now();
     const servicoComUsuario = {
@@ -63,6 +72,7 @@ export async function salvarSimplesCtePendente(servico, pedagio, sessao) {
             etapa: "selecionar_empresa",
             usuario: sessao.nome,
             semPedagio: Boolean(servico.semPedagio || !pedagio),
+            autoConfirmarCte: Boolean(servico.autoConfirmarCte),
             transportadora: servico.caminhao?.transportadora || "",
             placa: servico.codigo || servico.caminhao?.placa || "",
             caminhao: servico.caminhao || null,
@@ -75,11 +85,44 @@ export async function salvarSimplesCtePendente(servico, pedagio, sessao) {
     });
 }
 
+export async function salvarMdfePendente(servico, sessao) {
+    const agora = Date.now();
+
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.mdfePendente]: {
+            criadoEm: agora,
+            atualizadoEm: agora,
+            etapa: "selecionar_empresa",
+            usuario: sessao.nome,
+            transportadora: servico.caminhao?.transportadora || "",
+            placa: servico.codigo || servico.caminhao?.placa || "",
+            cidadeDestino: servico.cidade || servico.resumo?.municipio || "",
+            emitente: servico.resumo?.emitente || servico.nfs?.[0]?.emitente || "",
+            produtor: servico.resumo?.produtor || servico.grupoCte?.produtor || "",
+            produtores: extrairProdutoresServico(servico),
+            notas: servico.resumo?.notas || servico.chavesAcesso || [],
+            servico
+        }
+    });
+}
+
+function extrairProdutoresServico(servico) {
+    const grupos = servico.gruposCte || servico.gruposProdutores || servico.resumo?.produtores || [];
+    const produtores = [
+        servico.grupoCte?.produtor,
+        servico.resumo?.produtor,
+        ...grupos.map((grupo) => grupo?.produtor)
+    ].filter(Boolean);
+
+    return Array.from(new Set(produtores));
+}
+
 export async function limparServicoTemporario() {
     await chrome.storage.local.remove([
         STORAGE_KEYS.servicoAtual,
         STORAGE_KEYS.repomPendente,
         STORAGE_KEYS.repomPedagioEmitido,
-        STORAGE_KEYS.simplesCtePendente
+        STORAGE_KEYS.simplesCtePendente,
+        STORAGE_KEYS.mdfePendente
     ]);
 }

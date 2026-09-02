@@ -47,18 +47,17 @@
     "MJD": {
         "motorista": "LEONARDO TALINI",
         "transportadora": "ADILSON JOAO TALINI",
-        "placa": "MJD9E08",
-        "empresa": 40080
+        "placa": "MJD9E08"
     },
     "RAD": {
         "motorista": "ELENILSON",
         "transportadora": "MARIA",
         "placa": "RAD4C17"
     },
-    "AWD": {
+    "AZN": {
         "motorista": "CELSO DOS",
         "transportadora": "JHONATAN CRISTIAN",
-        "placa": "AWD6I57"
+        "placa": "AZN6H18"
     },
     "AUG": {
         "motorista": "JEANICE LEONIR",
@@ -73,8 +72,7 @@
     "QIF": {
         "motorista": "ENOIR FELIPE",
         "transportadora": "ADILSON JOAO TALINI",
-        "placa": "QIF5B75",
-        "empresa": 40080
+        "placa": "QIF5B75"
     },
     "MIO": {
         "motorista": "IOVANDRO",
@@ -137,12 +135,12 @@
         "placa": "MKG2B62"
     },
     "AWP": {
-        "motorista": "GUILHERME LUIZ",
+        "motorista": "ENOR FERNANDES",
         "transportadora": "MARIA ELIZANE",
         "placa": "AWP2E84"
     },
     "AVR": {
-        "motorista": "MURILO",
+        "motorista": "MATEUS ANTONIO ROSA",
         "transportadora": "TRANSPRIME",
         "placa": "AVR5A25"
     },
@@ -169,8 +167,7 @@
     "BAA": {
         "motorista": "ALMIR",
         "transportadora": "ADILSON",
-        "placa": "BAA4J53",
-        "empresa": 40080
+        "placa": "BAA4J53"
     },
     "AEN": {
         "motorista": "DENNER",

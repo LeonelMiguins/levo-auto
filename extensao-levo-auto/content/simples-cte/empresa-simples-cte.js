@@ -64,6 +64,10 @@ export async function selecionarEmpresaSimplesCte() {
         return preencherCalculadoraFrete(pendente);
     }
 
+    if (pendente.etapa === "informacoes_adicionais_preenchidas") {
+        return finalizarCteSeAutoconfirmar(pendente);
+    }
+
     if (pendente.etapa !== "selecionar_empresa") return false;
 
     if (!pendente.transportadora) {
@@ -880,7 +884,9 @@ async function confirmarDadosCteCarregados(pendente) {
         atualizadoEm: Date.now(),
         origemDadosCte: grupoAtualTemXml(pendente) ? "xml" : "chave_acesso",
         erroProdutores: false,
-        erroTomador: ""
+        erroTomador: "",
+        erroFrete: false,
+        erroKm: ""
     };
 
     await chrome.storage.local.set({
@@ -1174,12 +1180,85 @@ async function preencherCalculadoraFrete(pendente) {
             ...pendente,
             etapa: "informacoes_adicionais_preenchidas",
             atualizadoEm: Date.now(),
-            distanciaFrete
+            distanciaFrete,
+            erroFrete: false,
+            erroKm: ""
         }
     });
 
     console.log("Frete confirmado e informacoes adicionais preenchidas no Simples CTE.");
+
+    await finalizarCteSeAutoconfirmar({
+        ...pendente,
+        etapa: "informacoes_adicionais_preenchidas",
+        distanciaFrete,
+        erroFrete: false,
+        erroKm: ""
+    });
     return true;
+}
+
+async function finalizarCteSeAutoconfirmar(pendente) {
+    if (!deveAutoconfirmarCte(pendente)) return false;
+
+    const botao = await aguardarBotaoSalvarEmitirCte(TIMEOUT_AUTOCOMPLETE_MS);
+
+    if (!botao) {
+        console.warn("Botao Salvar e emitir nao encontrado para autoconfirmar CTE.", {
+            pendente,
+            botoesVisiveis: listarBotoesVisiveis()
+        });
+        return false;
+    }
+
+    await clicarElemento(botao);
+
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.simplesCtePendente]: {
+            ...pendente,
+            etapa: "cte_salvo_emitido",
+            atualizadoEm: Date.now(),
+            autoConfirmadoCte: true,
+            botaoSalvarEmitir: textoLimpo(botao.textContent)
+        }
+    });
+
+    console.log("CTE salvo e emitido automaticamente.");
+    return true;
+}
+
+function deveAutoconfirmarCte(pendente) {
+    return Boolean(
+        pendente.autoConfirmarCte ||
+        pendente.servico?.autoConfirmarCte
+    );
+}
+
+async function aguardarBotaoSalvarEmitirCte(timeout) {
+    const inicio = Date.now();
+
+    await esperarDocumentoPronto();
+    await sleep(150);
+
+    while (Date.now() - inicio < timeout) {
+        const botao = encontrarBotaoSalvarEmitirCte();
+
+        if (botao) return botao;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+function encontrarBotaoSalvarEmitirCte() {
+    const porTesteId = document.querySelector("[data-testid='/cte--modal-Adicione mais informações ao CTe--button-salvarEmitir']");
+
+    if (porTesteId && isVisivel(porTesteId) && !porTesteId.disabled) {
+        return porTesteId;
+    }
+
+    return encontrarBotaoPorTextos(["SALVAR E EMITIR"]);
 }
 
 async function aguardarBotaoCalculadoraFrete(timeout) {
@@ -1684,6 +1763,16 @@ async function preencherDistanciaCalculadora(pendente) {
     const distancia = obterDistanciaPagamento(pendente);
 
     if (!Number.isFinite(distancia) || distancia <= 0) {
+        await chrome.storage.local.set({
+            [STORAGE_KEYS.simplesCtePendente]: {
+                ...pendente,
+                etapa: "calculadora_frete_erro_km",
+                atualizadoEm: Date.now(),
+                erroFrete: true,
+                erroKm: "Distancia de pagamento nao encontrada"
+            }
+        });
+
         console.warn("Distancia de pagamento nao encontrada para preencher calculadora de frete.", pendente);
         return false;
     }

@@ -9,8 +9,8 @@ export function montarServico(nfs, contexto) {
     const destinoPedagio = selecionarDestinoPedagio(nfs, contexto);
     const nfDestino = destinoPedagio?.nf || primeira;
     const produtorKm = destinoPedagio?.produtorKm || null;
-    const placa = nfs.find((nf) => nf.placa)?.placa || "";
-    const caminhao = contexto.buscarCaminhao(placa);
+    const placa = normalizarPlacaOuCodigo(nfs.find((nf) => nf.placa)?.placa || "");
+    const caminhao = contexto.buscarCaminhao(placa) || contexto.buscarCaminhao(placa.slice(0, 3));
     const gruposProdutores = agruparNfsPorProdutor(nfs, contexto);
 
     return montarBaseServico({
@@ -21,6 +21,7 @@ export function montarServico(nfs, contexto) {
         nota: primeira.numero,
         quantidade: nfs.length,
         autoConfirmar: contexto.autoConfirmar,
+        autoConfirmarCte: contexto.autoConfirmarCte,
         semPedagio: contexto.semPedagio,
         caminhao,
         produtorKm,
@@ -43,7 +44,7 @@ export function montarServico(nfs, contexto) {
 }
 
 export function montarServicoManual(base = {}, valores, contexto) {
-    const placa = valores.placa.trim().toUpperCase();
+    const placa = normalizarPlacaOuCodigo(valores.placa);
     const nfBase = encontrarNfPorCidade(base.nfs, valores.cidade) || {
         produtor: base.resumo?.produtor,
         municipio: valores.cidade.trim(),
@@ -65,8 +66,9 @@ export function montarServicoManual(base = {}, valores, contexto) {
         nota: valores.nota.trim(),
         quantidade: Number(valores.quantidade || 0),
         autoConfirmar: valores.autoConfirmar,
+        autoConfirmarCte: valores.autoConfirmarCte,
         semPedagio: valores.semPedagio,
-        caminhao: contexto.buscarCaminhao(placa),
+        caminhao: contexto.buscarCaminhao(placa) || contexto.buscarCaminhao(placa.slice(0, 3)),
         produtorKm,
         chavesAcesso: base.chavesAcesso || extrairChavesAcesso(base.nfs),
         gruposProdutores: base.gruposProdutores || [],
@@ -81,6 +83,13 @@ export function montarServicoManual(base = {}, valores, contexto) {
             valorTotal: base.resumo?.valorTotal || 0
         }
     });
+}
+
+function normalizarPlacaOuCodigo(valor) {
+    return String(valor || "")
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, "")
+        .trim();
 }
 
 function montarBaseServico(servico) {
