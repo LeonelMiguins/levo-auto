@@ -505,7 +505,8 @@ function atualizarQuandoStorageMudar(changes, areaName) {
     if (
         changes[STORAGE_KEYS.servicoAtual] ||
         changes[STORAGE_KEYS.repomPendente] ||
-        changes[STORAGE_KEYS.simplesCtePendente]
+        changes[STORAGE_KEYS.simplesCtePendente] ||
+        changes[STORAGE_KEYS.mdfePendente]
     ) {
         atualizarLogsProcesso();
     }
@@ -632,7 +633,7 @@ function renderizarLogsProcesso(dados = {}) {
             status: freteErro ? "error" : ["calculadora_frete_calculada", "informacoes_adicionais_preenchidas", "cte_salvo_emitido"].includes(cteEtapa) ? "ok" : "pending"
         },
         {
-            texto: mdfe?.erro ? `MDFe com erro: ${mdfe.erro}` : "MDFe iniciado",
+            texto: obterTextoLogMdfe(mdfe),
             status: mdfe?.erro ? "error" : mdfe ? "ok" : "pending"
         }
     ];
@@ -645,6 +646,16 @@ function renderizarLogsProcesso(dados = {}) {
             return linha;
         })
     );
+}
+
+function obterTextoLogMdfe(mdfe) {
+    if (!mdfe?.erro) return "MDFe iniciado";
+
+    if (mdfe.erro === "CTe autorizado compativel nao encontrado") {
+        return "MDFe com erro: nenhum CTe autorizado compativel encontrado";
+    }
+
+    return `MDFe com erro: ${mdfe.erro}`;
 }
 
 async function aplicarHistoricoUsuario() {

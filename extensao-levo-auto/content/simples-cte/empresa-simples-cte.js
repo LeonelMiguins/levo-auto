@@ -1151,6 +1151,7 @@ async function preencherCalculadoraFrete(pendente) {
         return false;
     }
 
+    const valorFreteCalculado = capturarValorFreteCalculado();
     const confirmarOk = await clicarConfirmarFreteCalculado();
 
     if (!confirmarOk) {
@@ -1181,6 +1182,8 @@ async function preencherCalculadoraFrete(pendente) {
             etapa: "informacoes_adicionais_preenchidas",
             atualizadoEm: Date.now(),
             distanciaFrete,
+            valorFreteCalculado,
+            alvosMdfe: montarAlvosMdfe(pendente, valorFreteCalculado),
             erroFrete: false,
             erroKm: ""
         }
@@ -1192,6 +1195,8 @@ async function preencherCalculadoraFrete(pendente) {
         ...pendente,
         etapa: "informacoes_adicionais_preenchidas",
         distanciaFrete,
+        valorFreteCalculado,
+        alvosMdfe: montarAlvosMdfe(pendente, valorFreteCalculado),
         erroFrete: false,
         erroKm: ""
     });
@@ -1225,6 +1230,38 @@ async function finalizarCteSeAutoconfirmar(pendente) {
 
     console.log("CTE salvo e emitido automaticamente.");
     return true;
+}
+
+function capturarValorFreteCalculado() {
+    const modal = obterModalCalculadoraFrete();
+    const texto = textoLimpo(modal?.innerText || "");
+    const valores = Array.from(texto.matchAll(/R\$\s*[\d.]+,\d{2}/g))
+        .map((match) => match[0])
+        .filter(Boolean);
+
+    return valores.at(-1) || "";
+}
+
+function montarAlvosMdfe(pendente, valorFreteCalculado = "") {
+    const grupos = pendente.gruposCte || pendente.servico?.gruposCte || pendente.servico?.gruposProdutores || [];
+
+    if (Array.isArray(grupos) && grupos.length) {
+        return grupos.map((grupo) => ({
+            remetente: grupo.emitente || pendente.emitente || pendente.servico?.resumo?.emitente || "",
+            destinatario: grupo.produtor || "",
+            valorTotal: valorFreteCalculado || "",
+            origem: "PR",
+            destino: grupo.uf || "PR"
+        }));
+    }
+
+    return [{
+        remetente: pendente.emitente || pendente.servico?.resumo?.emitente || "",
+        destinatario: pendente.produtor || pendente.servico?.resumo?.produtor || "",
+        valorTotal: valorFreteCalculado || "",
+        origem: "PR",
+        destino: "PR"
+    }];
 }
 
 function deveAutoconfirmarCte(pendente) {

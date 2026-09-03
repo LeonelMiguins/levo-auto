@@ -87,6 +87,8 @@ export async function salvarSimplesCtePendente(servico, pedagio, sessao) {
 
 export async function salvarMdfePendente(servico, sessao) {
     const agora = Date.now();
+    const storage = await chrome.storage.local.get(STORAGE_KEYS.simplesCtePendente);
+    const ctePendente = storage[STORAGE_KEYS.simplesCtePendente] || {};
 
     await chrome.storage.local.set({
         [STORAGE_KEYS.mdfePendente]: {
@@ -101,6 +103,8 @@ export async function salvarMdfePendente(servico, sessao) {
             produtor: servico.resumo?.produtor || servico.grupoCte?.produtor || "",
             produtores: extrairProdutoresServico(servico),
             notas: servico.resumo?.notas || servico.chavesAcesso || [],
+            valorFreteCalculado: ctePendente.valorFreteCalculado || "",
+            alvosCteMdfe: ctePendente.alvosMdfe || servico.alvosCteMdfe || [],
             servico
         }
     });

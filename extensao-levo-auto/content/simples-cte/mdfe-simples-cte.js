@@ -3,6 +3,7 @@ import { normalizar } from "../../shared/text.js";
 
 const TEMPO_MAX_MDFE_MS = 10 * 60 * 1000;
 const TIMEOUT_MDFE_MS = 8000;
+const TIMEOUT_TRANSICAO_MDFE_MS = 20000;
 const INTERVALO_BUSCA_MS = 150;
 const PAUSA_POS_CLIQUE_MS = 450;
 
@@ -104,6 +105,17 @@ async function selecionarEmpresaMdfe(pendente) {
 }
 
 async function clicarModuloMdfe(pendente) {
+    const botaoNovoAberto = encontrarBotaoNovoMdfe();
+
+    if (botaoNovoAberto) {
+        const atualizado = await atualizarPendenteMdfe(pendente, {
+            etapa: "mdfe_modulo_clicado",
+            moduloJaAberto: true
+        });
+
+        return clicarNovoMdfe(atualizado);
+    }
+
     const botao = await aguardarElemento(TIMEOUT_MDFE_MS, encontrarCardMdfe);
 
     if (!botao) {
@@ -112,13 +124,23 @@ async function clicarModuloMdfe(pendente) {
     }
 
     await clicarElemento(botao);
+    const telaMdfeAberta = await aguardarElemento(TIMEOUT_TRANSICAO_MDFE_MS, encontrarBotaoNovoMdfe);
+
+    if (!telaMdfeAberta) {
+        await registrarErroMdfe(pendente, "Tela de MDFe nao abriu o botao Novo MDFe");
+        console.warn("Modulo MDFe foi clicado, mas o botao Novo MDFe nao apareceu.", {
+            pendente,
+            botao: textoLimpo(botao.textContent),
+            botoesVisiveis: listarBotoesVisiveis()
+        });
+        return false;
+    }
 
     const atualizado = await atualizarPendenteMdfe(pendente, {
         etapa: "mdfe_modulo_clicado",
         modulo: textoLimpo(botao.textContent)
     });
 
-    await sleep(PAUSA_POS_CLIQUE_MS);
     return clicarNovoMdfe(atualizado);
 }
 
@@ -130,15 +152,47 @@ async function clicarNovoMdfe(pendente) {
         return false;
     }
 
-    await clicarElemento(botao);
+    const resultadoClique = await clicarNovoMdfeAteAbrirDocumento();
+    const modalDocumento = resultadoClique?.modalDocumento;
+
+    if (!modalDocumento) {
+        await registrarErroMdfe(pendente, "Modal para adicionar documento do MDFe nao abriu");
+        console.warn("Botao Novo MDFe clicado, mas o modal de documento nao apareceu.", {
+            pendente,
+            botao: textoLimpo(botao.textContent),
+            botoesVisiveis: listarBotoesVisiveis()
+        });
+        return false;
+    }
 
     const atualizado = await atualizarPendenteMdfe(pendente, {
         etapa: "novo_mdfe_clicado",
-        botaoNovoMdfe: textoLimpo(botao.textContent)
+        botaoNovoMdfe: textoLimpo(resultadoClique.botao.textContent)
     });
 
-    await sleep(PAUSA_POS_CLIQUE_MS);
     return clicarOpcaoCteMdfe(atualizado);
+}
+
+async function clicarNovoMdfeAteAbrirDocumento() {
+    for (let tentativa = 1; tentativa <= 3; tentativa += 1) {
+        const botoes = encontrarBotoesNovoMdfe();
+
+        for (const botao of botoes) {
+            await clicarElemento(botao);
+
+            const modalDocumento = await aguardarElemento(3500, () =>
+                encontrarModalAdicionarDocumentoMdfe() || encontrarBotaoOpcaoCte()
+            );
+
+            if (modalDocumento) return { botao, modalDocumento };
+
+            await sleep(300);
+        }
+
+        await sleep(500);
+    }
+
+    return null;
 }
 
 async function clicarOpcaoCteMdfe(pendente) {
@@ -223,31 +277,30 @@ async function aguardarLinhasCteCorretas(pendente, timeout, modal) {
 
 function encontrarLinhasCteCorretas(pendente, modal) {
     const linhas = listarLinhasCteModal(modal)
-        .filter((linha) => normalizar(linha.dados.status).includes("AUTORIZADO"))
+        .filter((linha) => statusPermiteManifestar(linha.dados.status))
         .map((linha) => ({
             ...linha,
             pontos: pontuarLinhaCteModal(linha.dados, pendente)
         }))
-        .filter((linha) => linha.pontos >= 6)
+        .filter((linha) => linha.pontos >= 8)
         .sort((a, b) => b.pontos - a.pontos || a.indice - b.indice);
 
-    const produtores = obterProdutoresBusca(pendente);
+    const alvos = obterAlvosCteMdfe(pendente);
 
-    if (produtores.length > 1) {
-        return escolherUmaLinhaPorProdutor(linhas, produtores);
+    if (alvos.length > 1) {
+        return escolherUmaLinhaPorAlvo(linhas, alvos);
     }
 
     return linhas.slice(0, 1);
 }
 
-function escolherUmaLinhaPorProdutor(linhas, produtores) {
+function escolherUmaLinhaPorAlvo(linhas, alvos) {
     const selecionadas = [];
 
-    produtores.forEach((produtor) => {
-        const produtorNormalizado = normalizar(produtor);
+    alvos.forEach((alvo) => {
         const linha = linhas.find((item) =>
             !selecionadas.includes(item) &&
-            textoCombina(item.dados.destinatario, produtorNormalizado)
+            linhaCombinaComAlvo(item.dados, alvo)
         );
 
         if (linha) selecionadas.push(linha);
@@ -292,16 +345,79 @@ function pontuarLinhaCteModal(dados, pendente) {
     const emitente = normalizar(pendente.emitente || pendente.servico?.resumo?.emitente);
     const empresa = inferirEmpresaTexto(emitente);
     const produtores = obterProdutoresBusca(pendente).map(normalizar);
+    const alvos = obterAlvosCteMdfe(pendente);
 
-    if (normalizar(dados.status).includes("AUTORIZADO")) pontos += 4;
+    if (statusPermiteManifestar(dados.status)) pontos += 6;
     if (dados.dataEmissao === obterDataHojeBr()) pontos += 2;
     if (emitente && (remetente.includes(emitente) || emitente.includes(remetente))) pontos += 4;
     if (empresa && remetente.includes(empresa)) pontos += 3;
     if (produtores.some((produtor) => textoCombina(destinatario, produtor))) pontos += 5;
     if (normalizar(dados.origem).includes("PR")) pontos += 1;
     if (normalizar(dados.destino).includes("PR")) pontos += 1;
+    if (alvos.some((alvo) => linhaCombinaComAlvo(dados, alvo))) pontos += 8;
+    if (
+        valorCteCombina(dados.valorTotal, pendente.valorFreteCalculado) ||
+        alvos.some((alvo) => valorCteCombina(dados.valorTotal, alvo.valorTotal))
+    ) {
+        pontos += 4;
+    }
 
     return pontos;
+}
+
+function statusPermiteManifestar(status) {
+    const texto = normalizar(status);
+
+    return texto.includes("AUTORIZADO") && !texto.includes("MANIFESTADO") && !texto.includes("CANCELADO");
+}
+
+function obterAlvosCteMdfe(pendente) {
+    const alvosSalvos = Array.isArray(pendente.alvosCteMdfe) ? pendente.alvosCteMdfe : [];
+
+    if (alvosSalvos.length) return alvosSalvos;
+
+    return obterProdutoresBusca(pendente).map((produtor) => ({
+        remetente: pendente.emitente || pendente.servico?.resumo?.emitente || "",
+        destinatario: produtor,
+        valorTotal: pendente.valorFreteCalculado || "",
+        origem: "PR",
+        destino: "PR"
+    }));
+}
+
+function linhaCombinaComAlvo(dados, alvo) {
+    const remetenteOk = !alvo.remetente || textoCombina(dados.remetente, normalizar(alvo.remetente)) || textoCombinaEmpresa(dados.remetente, alvo.remetente);
+    const destinatarioOk = !alvo.destinatario || textoCombina(dados.destinatario, normalizar(alvo.destinatario));
+    const origemOk = !alvo.origem || normalizar(dados.origem).includes(normalizar(alvo.origem));
+    const destinoOk = !alvo.destino || normalizar(dados.destino).includes(normalizar(alvo.destino));
+
+    return remetenteOk && destinatarioOk && origemOk && destinoOk;
+}
+
+function textoCombinaEmpresa(texto, empresa) {
+    const empresaInferida = inferirEmpresaTexto(normalizar(empresa));
+
+    return Boolean(empresaInferida && normalizar(texto).includes(empresaInferida));
+}
+
+function valorCteCombina(valorLinha, valorEsperado) {
+    const linha = normalizarValorMoeda(valorLinha);
+    const esperado = normalizarValorMoeda(valorEsperado);
+
+    if (!Number.isFinite(linha) || !Number.isFinite(esperado) || esperado <= 0) return false;
+
+    return Math.abs(linha - esperado) < 0.01;
+}
+
+function normalizarValorMoeda(valor) {
+    const texto = String(valor || "")
+        .replace(/\s|\u00a0/g, "")
+        .replace(/[^\d,.-]/g, "")
+        .replace(/\.(?=\d{3}(\D|$))/g, "")
+        .replace(",", ".");
+    const numero = Number(texto);
+
+    return Number.isFinite(numero) ? numero : NaN;
 }
 
 async function marcarLinhaCte(linha) {
@@ -327,6 +443,22 @@ function encontrarModalSelecionarEmpresa() {
     return Array.from(document.querySelectorAll(".MuiDialogContent-root, [role='dialog'], .MuiDialog-root, body"))
         .filter(isVisivel)
         .find((elemento) => normalizar(elemento.textContent).includes("SELECIONAR EMPRESA")) || null;
+}
+
+function encontrarModalAdicionarDocumentoMdfe() {
+    const textos = [
+        "ADICIONE SEU DOCUMENTO PARA EMITIR O MDFE",
+        "ADICIONE SEU DOCUMENTO",
+        "DOCUMENTO PARA EMITIR O MDFE",
+        "CONHECIMENTO DE TRANSPORTE CTE"
+    ];
+
+    return Array.from(document.querySelectorAll(".MuiDialogContent-root, [role='dialog'], .MuiDialog-root, body"))
+        .filter(isVisivel)
+        .find((elemento) => {
+            const texto = normalizar(elemento.textContent);
+            return textos.some((busca) => texto.includes(busca));
+        }) || null;
 }
 
 function encontrarCardMdfe() {
@@ -415,16 +547,57 @@ function estaEmAreaInternaSimplesCte() {
 }
 
 function encontrarBotaoNovoMdfe() {
-    return encontrarBotaoPorTexto("NOVO MDFE");
+    return encontrarBotoesNovoMdfe()[0] || null;
+}
+
+function encontrarBotoesNovoMdfe() {
+    const candidatos = [];
+    const adicionar = (elemento) => {
+        const botao = elemento?.closest?.("button, [role='button']") || elemento;
+
+        if (!botao || candidatos.includes(botao)) return;
+        if (!isVisivel(botao) || botao.disabled) return;
+        if (!normalizar(botao.textContent).replace(/[-\s]/g, "").includes("NOVOMDFE")) return;
+
+        candidatos.push(botao);
+    };
+
+    document.querySelectorAll("svg[data-icon-name='line-plus-circle-solid']").forEach((icone) => {
+        adicionar(icone.closest("button, [role='button']"));
+    });
+
+    Array.from(document.querySelectorAll("button, [role='button']"))
+        .filter(isVisivel)
+        .filter((elemento) => !elemento.disabled)
+        .filter((elemento) => normalizar(elemento.textContent).replace(/[-\s]/g, "").includes("NOVOMDFE"))
+        .forEach(adicionar);
+
+    const porTexto = encontrarBotaoPorTexto("NOVO MDFE");
+    adicionar(porTexto);
+
+    return candidatos.sort((a, b) => pontuarBotaoNovoMdfe(b) - pontuarBotaoNovoMdfe(a));
+}
+
+function pontuarBotaoNovoMdfe(botao) {
+    let pontos = 0;
+    const classe = botao.className?.toString() || "";
+
+    if (botao.tagName === "BUTTON") pontos += 5;
+    if (classe.includes("MuiButton-containedPrimary")) pontos += 4;
+    if (classe.includes("MuiButton-fullWidth")) pontos += 3;
+    if (botao.querySelector("svg[data-icon-name='line-plus-circle-solid']")) pontos += 2;
+
+    return pontos;
 }
 
 function encontrarBotaoOpcaoCte() {
-    const porIcone = document.querySelector("svg[data-icon-name='file-cte-light']")
+    const raiz = encontrarModalAdicionarDocumentoMdfe() || document;
+    const porIcone = raiz.querySelector("svg[data-icon-name='file-cte-light']")
         ?.closest("button, [role='button']");
 
     if (porIcone && isVisivel(porIcone) && !porIcone.disabled) return porIcone;
 
-    return encontrarBotaoPorTexto("CONHECIMENTO DE TRANSPORTE CTE");
+    return encontrarBotaoPorTexto("CONHECIMENTO DE TRANSPORTE CTE", raiz);
 }
 
 function encontrarBotaoAdicionarCte() {
@@ -465,10 +638,10 @@ async function aguardarMudancaAposClique(timeout = TIMEOUT_MDFE_MS) {
     }
 }
 
-function encontrarBotaoPorTexto(texto) {
+function encontrarBotaoPorTexto(texto, raiz = document) {
     const busca = normalizar(texto);
 
-    return Array.from(document.querySelectorAll("button, [role='button'], a, li, span, div"))
+    return Array.from(raiz.querySelectorAll("button, [role='button'], a, li, span, div"))
         .filter(isVisivel)
         .filter((elemento) => normalizar(elemento.textContent).includes(busca))
         .map((elemento) => elemento.closest("button, [role='button'], a, li") || elemento)
@@ -670,6 +843,18 @@ function isVisivel(elemento) {
 
 function textoLimpo(texto) {
     return String(texto || "").replace(/\s+/g, " ").trim();
+}
+
+function listarBotoesVisiveis() {
+    return Array.from(document.querySelectorAll("button, [role='button'], .MuiButtonBase-root"))
+        .filter(isVisivel)
+        .slice(0, 30)
+        .map((elemento) => ({
+            texto: textoLimpo(elemento.textContent),
+            classe: elemento.className?.toString() || "",
+            id: elemento.id || "",
+            ariaLabel: elemento.getAttribute("aria-label") || ""
+        }));
 }
 
 function sleep(ms) {
