@@ -8,6 +8,7 @@ const TIMEOUT_RECEITA_MS = 60000;
 const INTERVALO_BUSCA_MS = 150;
 const PAUSA_POS_CLIQUE_MS = 450;
 const TEMPO_MINIMO_BUSCA_GRUPO_MS = 3500;
+const TEMPO_VALIDACAO_TOMADOR_MS = 7000;
 
 export async function selecionarEmpresaSimplesCte() {
     if (!location.hostname.includes("app.simplescte.com.br")) return false;
@@ -904,6 +905,7 @@ async function validarTomadorCarregadoPeloXml(pendente) {
     const campo = await aguardarCampoTomador(TIMEOUT_AUTOCOMPLETE_MS);
 
     if (!campo) {
+        await registrarErroTomador(pendente, "Campo Tomador nao encontrado", "");
         console.warn("Campo Tomador nao encontrado para validar os dados carregados pelo XML.", {
             pendente,
             camposVisiveis: listarCamposVisiveis()
@@ -911,30 +913,59 @@ async function validarTomadorCarregadoPeloXml(pendente) {
         return false;
     }
 
-    const valor = obterTextoCampo(campo);
-    const valorNormalizado = normalizar(valor);
+    const validacao = await aguardarTomadorCarregadoValido(TEMPO_VALIDACAO_TOMADOR_MS);
 
-    if (tomadorInvalido(valorNormalizado)) {
-        await chrome.storage.local.set({
-            [STORAGE_KEYS.simplesCtePendente]: {
-                ...pendente,
-                etapa: "dados_cte_erro_produtores",
-                atualizadoEm: Date.now(),
-                erroProdutores: true,
-                erroTomador: "Tomador vazio ou DIVERSOS",
-                valorTomador: valor
-            }
-        });
+    if (!validacao.valido) {
+        await registrarErroTomador(pendente, "Tomador vazio ou DIVERSOS", validacao.valor);
 
         console.warn("Tomador vazio ou DIVERSOS apos carregar XML. A automacao foi interrompida antes da calculadora.", {
             pendente,
-            valorCampo: valor,
+            valorCampo: validacao.valor,
             camposVisiveis: listarCamposVisiveis()
         });
         return false;
     }
 
     return true;
+}
+
+async function aguardarTomadorCarregadoValido(timeout) {
+    const inicio = Date.now();
+    let ultimoValor = "";
+
+    while (Date.now() - inicio < timeout) {
+        const campo = encontrarCampoTomador();
+        const valor = campo ? obterTextoCampo(campo) : "";
+        const valorNormalizado = normalizar(valor);
+
+        if (valor) ultimoValor = valor;
+        if (!tomadorInvalido(valorNormalizado)) {
+            return {
+                valido: true,
+                valor
+            };
+        }
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return {
+        valido: false,
+        valor: ultimoValor
+    };
+}
+
+async function registrarErroTomador(pendente, erroTomador, valorTomador) {
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.simplesCtePendente]: {
+            ...pendente,
+            etapa: "dados_cte_erro_produtores",
+            atualizadoEm: Date.now(),
+            erroProdutores: true,
+            erroTomador,
+            valorTomador
+        }
+    });
 }
 
 async function preencherProdutorTomador(pendente) {
@@ -1151,7 +1182,6 @@ async function preencherCalculadoraFrete(pendente) {
         return false;
     }
 
-    const valorFreteCalculado = capturarValorFreteCalculado();
     const confirmarOk = await clicarConfirmarFreteCalculado();
 
     if (!confirmarOk) {
@@ -1182,8 +1212,6 @@ async function preencherCalculadoraFrete(pendente) {
             etapa: "informacoes_adicionais_preenchidas",
             atualizadoEm: Date.now(),
             distanciaFrete,
-            valorFreteCalculado,
-            alvosMdfe: montarAlvosMdfe(pendente, valorFreteCalculado),
             erroFrete: false,
             erroKm: ""
         }
@@ -1195,8 +1223,6 @@ async function preencherCalculadoraFrete(pendente) {
         ...pendente,
         etapa: "informacoes_adicionais_preenchidas",
         distanciaFrete,
-        valorFreteCalculado,
-        alvosMdfe: montarAlvosMdfe(pendente, valorFreteCalculado),
         erroFrete: false,
         erroKm: ""
     });
@@ -1230,38 +1256,6 @@ async function finalizarCteSeAutoconfirmar(pendente) {
 
     console.log("CTE salvo e emitido automaticamente.");
     return true;
-}
-
-function capturarValorFreteCalculado() {
-    const modal = obterModalCalculadoraFrete();
-    const texto = textoLimpo(modal?.innerText || "");
-    const valores = Array.from(texto.matchAll(/R\$\s*[\d.]+,\d{2}/g))
-        .map((match) => match[0])
-        .filter(Boolean);
-
-    return valores.at(-1) || "";
-}
-
-function montarAlvosMdfe(pendente, valorFreteCalculado = "") {
-    const grupos = pendente.gruposCte || pendente.servico?.gruposCte || pendente.servico?.gruposProdutores || [];
-
-    if (Array.isArray(grupos) && grupos.length) {
-        return grupos.map((grupo) => ({
-            remetente: grupo.emitente || pendente.emitente || pendente.servico?.resumo?.emitente || "",
-            destinatario: grupo.produtor || "",
-            valorTotal: valorFreteCalculado || "",
-            origem: "PR",
-            destino: grupo.uf || "PR"
-        }));
-    }
-
-    return [{
-        remetente: pendente.emitente || pendente.servico?.resumo?.emitente || "",
-        destinatario: pendente.produtor || pendente.servico?.resumo?.produtor || "",
-        valorTotal: valorFreteCalculado || "",
-        origem: "PR",
-        destino: "PR"
-    }];
 }
 
 function deveAutoconfirmarCte(pendente) {

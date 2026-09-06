@@ -7,12 +7,17 @@
     window.__pedagioAutoContentRodando = true;
 
     if (location.hostname.includes("app.simplescte.com.br")) {
-        const { executarMdfePendente } = await import(chrome.runtime.getURL("content/simples-cte/mdfe-simples-cte.js"));
+        const { escutarValePedagioSimplesCte } = await import(chrome.runtime.getURL("content/simples-cte/vale-pedagio-simples-cte.js"));
         const { selecionarEmpresaSimplesCte } = await import(chrome.runtime.getURL("content/simples-cte/empresa-simples-cte.js"));
 
-        if (await executarMdfePendente()) return;
+        escutarValePedagioSimplesCte();
 
-        await selecionarEmpresaSimplesCte();
+        try {
+            await selecionarEmpresaSimplesCte();
+        } catch (error) {
+            console.warn("Falha ao executar automacao principal do Simples CTE. O ouvinte do Vale-Pedagio continua ativo.", error);
+        }
+
         return;
     }
 

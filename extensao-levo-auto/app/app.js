@@ -14,7 +14,6 @@ import {
     obterPedagioEmitido,
     obterServicoAtual,
     salvarServicoAtual,
-    salvarMdfePendente,
     salvarServicoRepomPendente,
     salvarSimplesCtePendente
 } from "./services/storage-service.js";
@@ -66,7 +65,6 @@ const repomEmitido = {
     valor: $("#repomValor"),
     empresa: $("#repomEmpresa"),
     btnCte: $("#btnCte"),
-    btnMdfe: $("#btnMdfe"),
     historico: $("#historicoPedagios")
 };
 
@@ -99,7 +97,6 @@ async function iniciar() {
     $("#btnSalvar").addEventListener("click", salvarTemporario);
     $("#btnRepom").addEventListener("click", fazerRepom);
     $("#btnCte").addEventListener("click", fazerCte);
-    $("#btnMdfe").addEventListener("click", fazerMdfe);
     $("#btnLimpar").addEventListener("click", limparTudo);
     chrome.storage.onChanged.addListener(atualizarQuandoStorageMudar);
 
@@ -345,36 +342,6 @@ async function fazerCte() {
     await atualizarLogsProcesso();
 }
 
-async function fazerMdfe() {
-    const sessao = await exigirSessao();
-    const servicoBase = await obterServicoAtual();
-    const servicoAtualizado = montarServicoManual(
-        servicoBase || {},
-        obterValoresTela(),
-        criarContextoServico()
-    );
-    const servico = prepararServicoParaCte(servicoAtualizado);
-
-    if (!servico?.cidade || !servico?.nota || !servico?.quantidade) {
-        setStatus("Carregue ou salve os dados da nota antes de fazer o MDF-e.", "error");
-        return;
-    }
-
-    if (!servico?.caminhao?.transportadora) {
-        setStatus("Transportadora do caminhao nao encontrada na base.", "error");
-        return;
-    }
-
-    await salvarServicoAtual(servico);
-    await salvarMdfePendente(servico, sessao);
-
-    const aba = await abrirOuReutilizarAbaSimplesCte();
-    const acao = aba.reutilizada ? "reutilizada" : "aberta";
-
-    setStatus(`Simples CTE ${acao}. Buscando CTe correto para gerar MDF-e.`, "ok");
-    await atualizarLogsProcesso();
-}
-
 async function limparTudo() {
     await exigirSessao();
 
@@ -505,8 +472,7 @@ function atualizarQuandoStorageMudar(changes, areaName) {
     if (
         changes[STORAGE_KEYS.servicoAtual] ||
         changes[STORAGE_KEYS.repomPendente] ||
-        changes[STORAGE_KEYS.simplesCtePendente] ||
-        changes[STORAGE_KEYS.mdfePendente]
+        changes[STORAGE_KEYS.simplesCtePendente]
     ) {
         atualizarLogsProcesso();
     }
@@ -534,7 +500,6 @@ function atualizarBotaoCte(pedagioAtual = null) {
 
     if (campos.semPedagio.checked) {
         repomEmitido.btnCte.disabled = !dadosNotaOk;
-        atualizarBotaoMdfe();
         return;
     }
 
@@ -545,11 +510,6 @@ function atualizarBotaoCte(pedagioAtual = null) {
         pedagioAtual?.empresa;
 
     repomEmitido.btnCte.disabled = !pedagioOk;
-    atualizarBotaoMdfe();
-}
-
-function atualizarBotaoMdfe() {
-    repomEmitido.btnMdfe.disabled = false;
 }
 
 async function alternarSemPedagio() {
@@ -579,23 +539,21 @@ async function atualizarLogsProcesso() {
         STORAGE_KEYS.servicoAtual,
         STORAGE_KEYS.repomPendente,
         STORAGE_KEYS.repomPedagioEmitido,
-        STORAGE_KEYS.simplesCtePendente,
-        STORAGE_KEYS.mdfePendente
+        STORAGE_KEYS.simplesCtePendente
     ]);
 
     renderizarLogsProcesso({
         servico: storage[STORAGE_KEYS.servicoAtual],
         repomPendente: storage[STORAGE_KEYS.repomPendente],
         pedagio: storage[STORAGE_KEYS.repomPedagioEmitido],
-        cte: storage[STORAGE_KEYS.simplesCtePendente],
-        mdfe: storage[STORAGE_KEYS.mdfePendente]
+        cte: storage[STORAGE_KEYS.simplesCtePendente]
     });
 }
 
 function renderizarLogsProcesso(dados = {}) {
     if (!processo.logs) return;
 
-    const { servico, repomPendente, pedagio, cte, mdfe } = dados;
+    const { servico, repomPendente, pedagio, cte } = dados;
     const semPedagio = Boolean(servico?.semPedagio || cte?.semPedagio);
     const cteEtapa = cte?.etapa || "";
     const produtoresErro = Boolean(cte?.erroProdutores || cte?.erroTomador);
@@ -631,10 +589,6 @@ function renderizarLogsProcesso(dados = {}) {
         {
             texto: freteErro ? "Frete com erro: KM do produtor nao encontrado" : "Valor do frete inserido",
             status: freteErro ? "error" : ["calculadora_frete_calculada", "informacoes_adicionais_preenchidas", "cte_salvo_emitido"].includes(cteEtapa) ? "ok" : "pending"
-        },
-        {
-            texto: obterTextoLogMdfe(mdfe),
-            status: mdfe?.erro ? "error" : mdfe ? "ok" : "pending"
         }
     ];
 
@@ -646,16 +600,6 @@ function renderizarLogsProcesso(dados = {}) {
             return linha;
         })
     );
-}
-
-function obterTextoLogMdfe(mdfe) {
-    if (!mdfe?.erro) return "MDFe iniciado";
-
-    if (mdfe.erro === "CTe autorizado compativel nao encontrado") {
-        return "MDFe com erro: nenhum CTe autorizado compativel encontrado";
-    }
-
-    return `MDFe com erro: ${mdfe.erro}`;
 }
 
 async function aplicarHistoricoUsuario() {

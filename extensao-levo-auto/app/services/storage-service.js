@@ -27,8 +27,7 @@ export async function limparEtapasAutomacao() {
     await chrome.storage.local.remove([
         STORAGE_KEYS.repomPendente,
         STORAGE_KEYS.repomPedagioEmitido,
-        STORAGE_KEYS.simplesCtePendente,
-        STORAGE_KEYS.mdfePendente
+        STORAGE_KEYS.simplesCtePendente
     ]);
 }
 
@@ -85,48 +84,11 @@ export async function salvarSimplesCtePendente(servico, pedagio, sessao) {
     });
 }
 
-export async function salvarMdfePendente(servico, sessao) {
-    const agora = Date.now();
-    const storage = await chrome.storage.local.get(STORAGE_KEYS.simplesCtePendente);
-    const ctePendente = storage[STORAGE_KEYS.simplesCtePendente] || {};
-
-    await chrome.storage.local.set({
-        [STORAGE_KEYS.mdfePendente]: {
-            criadoEm: agora,
-            atualizadoEm: agora,
-            etapa: "selecionar_empresa",
-            usuario: sessao.nome,
-            transportadora: servico.caminhao?.transportadora || "",
-            placa: servico.codigo || servico.caminhao?.placa || "",
-            cidadeDestino: servico.cidade || servico.resumo?.municipio || "",
-            emitente: servico.resumo?.emitente || servico.nfs?.[0]?.emitente || "",
-            produtor: servico.resumo?.produtor || servico.grupoCte?.produtor || "",
-            produtores: extrairProdutoresServico(servico),
-            notas: servico.resumo?.notas || servico.chavesAcesso || [],
-            valorFreteCalculado: ctePendente.valorFreteCalculado || "",
-            alvosCteMdfe: ctePendente.alvosMdfe || servico.alvosCteMdfe || [],
-            servico
-        }
-    });
-}
-
-function extrairProdutoresServico(servico) {
-    const grupos = servico.gruposCte || servico.gruposProdutores || servico.resumo?.produtores || [];
-    const produtores = [
-        servico.grupoCte?.produtor,
-        servico.resumo?.produtor,
-        ...grupos.map((grupo) => grupo?.produtor)
-    ].filter(Boolean);
-
-    return Array.from(new Set(produtores));
-}
-
 export async function limparServicoTemporario() {
     await chrome.storage.local.remove([
         STORAGE_KEYS.servicoAtual,
         STORAGE_KEYS.repomPendente,
         STORAGE_KEYS.repomPedagioEmitido,
-        STORAGE_KEYS.simplesCtePendente,
-        STORAGE_KEYS.mdfePendente
+        STORAGE_KEYS.simplesCtePendente
     ]);
 }
