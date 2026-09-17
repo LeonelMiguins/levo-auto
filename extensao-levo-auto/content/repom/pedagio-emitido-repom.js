@@ -40,7 +40,56 @@ export async function capturarPedagioEmitido() {
     });
 
     console.log("Dados do pedagio emitido capturados.", pedagioEmitido);
+    await abrirImpressaoPedagio(pedagioEmitido);
+
+    if (sessao.is_admin === true && servicoAtual.autoIniciarCte === true) {
+        const resposta = await chrome.runtime.sendMessage({
+            tipo: "LEVO_AUTO_INICIAR_CTE_APOS_PEDAGIO"
+        });
+
+        if (!resposta?.ok) {
+            console.warn("Nao foi possivel auto-iniciar o CTE apos capturar o pedagio.", resposta);
+        }
+    }
+
     return false;
+}
+
+async function abrirImpressaoPedagio(pedagio) {
+    const chaveImpressao = [
+        "levo-auto-impressao-repom",
+        pedagio.numeroPedagio,
+        pedagio.numeroMeioPagamento
+    ].join(":");
+
+    if (sessionStorage.getItem(chaveImpressao)) return false;
+
+    const botao = await aguardarBotaoImprimir(5000);
+
+    if (!botao) {
+        console.warn("Botao Imprimir nao encontrado no relatorio do pedagio.");
+        return false;
+    }
+
+    sessionStorage.setItem(chaveImpressao, String(Date.now()));
+    botao.scrollIntoView?.({ behavior: "instant", block: "center" });
+    botao.click();
+    console.log("Janela de impressao do pedagio aberta. Confirme a impressao manualmente.");
+    return true;
+}
+
+async function aguardarBotaoImprimir(timeout) {
+    const inicio = Date.now();
+
+    while (Date.now() - inicio < timeout) {
+        const botao = document.querySelector("#BtnPrint, input[type='button'][value='Imprimir']");
+
+        if (botao && !botao.disabled) return botao;
+
+        await new Promise((resolve) => setTimeout(resolve, 150));
+    }
+
+    return null;
 }
 
 function extrairDadosPedagioEmitido() {

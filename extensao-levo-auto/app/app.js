@@ -38,6 +38,7 @@ const campos = {
     quantidade: $("#quantidade"),
     autoConfirmar: $("#autoConfirmar"),
     autoConfirmarCte: $("#autoConfirmarCte"),
+    autoIniciarCte: $("#autoIniciarCte"),
     semPedagio: $("#semPedagio")
 };
 
@@ -93,6 +94,7 @@ async function iniciar() {
     campos.nota.addEventListener("input", atualizarBotaoRepom);
     campos.quantidade.addEventListener("input", atualizarBotaoRepom);
     campos.autoConfirmarCte.addEventListener("change", salvarOpcoesAutomacao);
+    campos.autoIniciarCte.addEventListener("change", salvarOpcoesAutomacao);
     campos.semPedagio.addEventListener("change", alternarSemPedagio);
     $("#btnSalvar").addEventListener("click", salvarTemporario);
     $("#btnRepom").addEventListener("click", fazerRepom);
@@ -148,12 +150,12 @@ function aplicarSessao(sessao) {
     login.senha.value = "";
     login.usuarioSessao.textContent =
         `${sessao.nome} - sessao ate ${formatarHora(sessao.expiraEm)}`;
-    aplicarPermissaoAutoconfirmarCte();
+    aplicarPermissoesAdministrador();
 }
 
 function bloquearAplicacao() {
     estado.sessao = null;
-    aplicarPermissaoAutoconfirmarCte();
+    aplicarPermissoesAdministrador();
     document.body.classList.add("bloqueado");
     login.usuarioSessao.textContent = "";
     setLoginStatus("Entre para iniciar a automacao.", false);
@@ -236,6 +238,7 @@ function aplicarServicoNaTela(servico) {
     campos.quantidade.value = servico.quantidade || 0;
     campos.autoConfirmar.checked = Boolean(servico.autoConfirmar ?? servico.autoImprimir);
     campos.autoConfirmarCte.checked = podeAutoconfirmarCte() && Boolean(servico.autoConfirmarCte);
+    campos.autoIniciarCte.checked = podeUsarRecursosAdministrador() && Boolean(servico.autoIniciarCte);
     campos.semPedagio.checked = Boolean(servico.semPedagio);
 
     estado.grupoCteSelecionadoId = obterGrupoSelecionado(servico)?.id || servico.grupoCteSelecionadoId || "";
@@ -378,6 +381,7 @@ function obterValoresTela() {
         quantidade: campos.quantidade.value,
         autoConfirmar: campos.autoConfirmar.checked,
         autoConfirmarCte: podeAutoconfirmarCte() && campos.autoConfirmarCte.checked,
+        autoIniciarCte: podeUsarRecursosAdministrador() && campos.autoIniciarCte.checked,
         semPedagio: campos.semPedagio.checked
     };
 }
@@ -386,6 +390,7 @@ function criarContextoServico() {
     return {
         autoConfirmar: campos.autoConfirmar.checked,
         autoConfirmarCte: podeAutoconfirmarCte() && campos.autoConfirmarCte.checked,
+        autoIniciarCte: podeUsarRecursosAdministrador() && campos.autoIniciarCte.checked,
         semPedagio: campos.semPedagio.checked,
         buscarCaminhao,
         buscarProdutorKm
@@ -526,6 +531,10 @@ async function salvarOpcoesAutomacao() {
         campos.autoConfirmarCte.checked = false;
     }
 
+    if (!podeUsarRecursosAdministrador()) {
+        campos.autoIniciarCte.checked = false;
+    }
+
     const servicoAtual = await obterServicoAtual();
 
     if (servicoAtual) {
@@ -533,26 +542,42 @@ async function salvarOpcoesAutomacao() {
             ...servicoAtual,
             semPedagio: campos.semPedagio.checked,
             autoConfirmar: campos.autoConfirmar.checked,
-            autoConfirmarCte: podeAutoconfirmarCte() && campos.autoConfirmarCte.checked
+            autoConfirmarCte: podeAutoconfirmarCte() && campos.autoConfirmarCte.checked,
+            autoIniciarCte: podeUsarRecursosAdministrador() && campos.autoIniciarCte.checked
         });
     }
 }
 
 function podeAutoconfirmarCte() {
+    return podeUsarRecursosAdministrador();
+}
+
+function podeUsarRecursosAdministrador() {
     return estado.sessao?.is_admin === true;
 }
 
-function aplicarPermissaoAutoconfirmarCte() {
-    const permitido = podeAutoconfirmarCte();
+function aplicarPermissoesAdministrador() {
+    aplicarPermissaoCheckboxAdministrador(
+        campos.autoConfirmarCte,
+        "Disponivel somente para administradores"
+    );
+    aplicarPermissaoCheckboxAdministrador(
+        campos.autoIniciarCte,
+        "Disponivel somente para administradores"
+    );
+}
 
-    campos.autoConfirmarCte.disabled = !permitido;
-    campos.autoConfirmarCte.closest("label")?.classList.toggle("disabled", !permitido);
-    campos.autoConfirmarCte.title = permitido
+function aplicarPermissaoCheckboxAdministrador(campo, mensagem) {
+    const permitido = podeUsarRecursosAdministrador();
+
+    campo.disabled = !permitido;
+    campo.closest("label")?.classList.toggle("disabled", !permitido);
+    campo.title = permitido
         ? ""
-        : "Disponivel somente para administradores";
+        : mensagem;
 
     if (!permitido) {
-        campos.autoConfirmarCte.checked = false;
+        campo.checked = false;
     }
 }
 

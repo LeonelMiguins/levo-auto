@@ -35,6 +35,7 @@ export async function salvarServicoRepomPendente(servico, sessao) {
     const agora = Date.now();
     const servicoComUsuario = {
         ...servico,
+        autoIniciarCte: sessao?.is_admin === true && Boolean(servico.autoIniciarCte),
         usuario: sessao.nome
     };
 
