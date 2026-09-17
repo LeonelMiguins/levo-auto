@@ -1,11 +1,20 @@
 [
   {
-    "nome": "usuario",
-    "senha": "senha-da-extensao",
-    "login_repom_plusval": "login-repom-plusval",
-    "senha_repom_plusval": "senha-repom-plusval",
-    "login_repom_pluma": "login-repom-pluma",
-    "senha_repom_pluma": "senha-repom-pluma",
+    "nome": "leo",
+    "senha": "135792468",
+    "login_repom_plusval": "35030372000579leonel",
+    "senha_repom_plusval": "D&&/Zyk9Jdrvu2X",
+    "login_repom_pluma": "04656883002863leonel",
+    "senha_repom_pluma": "senha_pluma",
+    "is_admin": true
+  },
+    {
+    "nome": "luiz",
+    "senha": "0000",
+    "login_repom_plusval": "35030372000579leonel",
+    "senha_repom_plusval": "D&&/Zyk9Jdrvu2X",
+    "login_repom_pluma": "04656883002863leonel",
+    "senha_repom_pluma": "senha_pluma",
     "is_admin": false
   }
 ]

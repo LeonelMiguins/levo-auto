@@ -487,3 +487,12 @@ button:disabled {
         width: 100%;
     }
 }
+.check.disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.check.disabled input,
+.check.disabled span {
+    cursor: not-allowed;
+}

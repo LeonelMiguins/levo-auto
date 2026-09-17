@@ -63,6 +63,11 @@ export async function salvarServicoRepomPendente(servico, sessao) {
 
 export async function salvarSimplesCtePendente(servico, pedagio, sessao) {
     const agora = Date.now();
+    const autoConfirmarCte = sessao?.is_admin === true && Boolean(servico.autoConfirmarCte);
+    const servicoSeguro = {
+        ...servico,
+        autoConfirmarCte
+    };
 
     await chrome.storage.local.set({
         [STORAGE_KEYS.simplesCtePendente]: {
@@ -71,14 +76,14 @@ export async function salvarSimplesCtePendente(servico, pedagio, sessao) {
             etapa: "selecionar_empresa",
             usuario: sessao.nome,
             semPedagio: Boolean(servico.semPedagio || !pedagio),
-            autoConfirmarCte: Boolean(servico.autoConfirmarCte),
+            autoConfirmarCte,
             transportadora: servico.caminhao?.transportadora || "",
             placa: servico.codigo || servico.caminhao?.placa || "",
             caminhao: servico.caminhao || null,
             gruposCte: servico.gruposCte || servico.gruposProdutores || [],
             indiceGrupoCteAtual: 0,
             grupoCte: servico.grupoCte || null,
-            servico,
+            servico: servicoSeguro,
             pedagio
         }
     });

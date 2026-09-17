@@ -1217,7 +1217,7 @@ async function preencherCalculadoraFrete(pendente) {
 }
 
 async function finalizarCteSeAutoconfirmar(pendente) {
-    if (!deveAutoconfirmarCte(pendente)) return false;
+    if (!await deveAutoconfirmarCte(pendente)) return false;
 
     const botao = await aguardarBotaoSalvarEmitirCte(TIMEOUT_AUTOCOMPLETE_MS);
 
@@ -1245,7 +1245,12 @@ async function finalizarCteSeAutoconfirmar(pendente) {
     return true;
 }
 
-function deveAutoconfirmarCte(pendente) {
+async function deveAutoconfirmarCte(pendente) {
+    const storage = await chrome.storage.local.get(STORAGE_KEYS.sessao);
+    const sessao = storage[STORAGE_KEYS.sessao];
+
+    if (sessao?.is_admin !== true) return false;
+
     return Boolean(
         pendente.autoConfirmarCte ||
         pendente.servico?.autoConfirmarCte

@@ -148,10 +148,12 @@ function aplicarSessao(sessao) {
     login.senha.value = "";
     login.usuarioSessao.textContent =
         `${sessao.nome} - sessao ate ${formatarHora(sessao.expiraEm)}`;
+    aplicarPermissaoAutoconfirmarCte();
 }
 
 function bloquearAplicacao() {
     estado.sessao = null;
+    aplicarPermissaoAutoconfirmarCte();
     document.body.classList.add("bloqueado");
     login.usuarioSessao.textContent = "";
     setLoginStatus("Entre para iniciar a automacao.", false);
@@ -233,7 +235,7 @@ function aplicarServicoNaTela(servico) {
     campos.nota.value = servico.nota || "";
     campos.quantidade.value = servico.quantidade || 0;
     campos.autoConfirmar.checked = Boolean(servico.autoConfirmar ?? servico.autoImprimir);
-    campos.autoConfirmarCte.checked = Boolean(servico.autoConfirmarCte);
+    campos.autoConfirmarCte.checked = podeAutoconfirmarCte() && Boolean(servico.autoConfirmarCte);
     campos.semPedagio.checked = Boolean(servico.semPedagio);
 
     estado.grupoCteSelecionadoId = obterGrupoSelecionado(servico)?.id || servico.grupoCteSelecionadoId || "";
@@ -375,7 +377,7 @@ function obterValoresTela() {
         nota: campos.nota.value,
         quantidade: campos.quantidade.value,
         autoConfirmar: campos.autoConfirmar.checked,
-        autoConfirmarCte: campos.autoConfirmarCte.checked,
+        autoConfirmarCte: podeAutoconfirmarCte() && campos.autoConfirmarCte.checked,
         semPedagio: campos.semPedagio.checked
     };
 }
@@ -383,7 +385,7 @@ function obterValoresTela() {
 function criarContextoServico() {
     return {
         autoConfirmar: campos.autoConfirmar.checked,
-        autoConfirmarCte: campos.autoConfirmarCte.checked,
+        autoConfirmarCte: podeAutoconfirmarCte() && campos.autoConfirmarCte.checked,
         semPedagio: campos.semPedagio.checked,
         buscarCaminhao,
         buscarProdutorKm
@@ -520,6 +522,10 @@ async function alternarSemPedagio() {
 }
 
 async function salvarOpcoesAutomacao() {
+    if (!podeAutoconfirmarCte()) {
+        campos.autoConfirmarCte.checked = false;
+    }
+
     const servicoAtual = await obterServicoAtual();
 
     if (servicoAtual) {
@@ -527,8 +533,26 @@ async function salvarOpcoesAutomacao() {
             ...servicoAtual,
             semPedagio: campos.semPedagio.checked,
             autoConfirmar: campos.autoConfirmar.checked,
-            autoConfirmarCte: campos.autoConfirmarCte.checked
+            autoConfirmarCte: podeAutoconfirmarCte() && campos.autoConfirmarCte.checked
         });
+    }
+}
+
+function podeAutoconfirmarCte() {
+    return estado.sessao?.is_admin === true;
+}
+
+function aplicarPermissaoAutoconfirmarCte() {
+    const permitido = podeAutoconfirmarCte();
+
+    campos.autoConfirmarCte.disabled = !permitido;
+    campos.autoConfirmarCte.closest("label")?.classList.toggle("disabled", !permitido);
+    campos.autoConfirmarCte.title = permitido
+        ? ""
+        : "Disponivel somente para administradores";
+
+    if (!permitido) {
+        campos.autoConfirmarCte.checked = false;
     }
 }
 
