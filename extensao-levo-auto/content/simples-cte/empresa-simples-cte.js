@@ -4,6 +4,7 @@ import { normalizar } from "../../shared/text.js";
 const TEMPO_MAX_CTE_MS = 10 * 60 * 1000;
 const TIMEOUT_CTE_MS = 3000;
 const TIMEOUT_AUTOCOMPLETE_MS = 8000;
+const TIMEOUT_CALCULADORA_MS = 12000;
 const TIMEOUT_RECEITA_MS = 60000;
 const INTERVALO_BUSCA_MS = 150;
 const PAUSA_POS_CLIQUE_MS = 450;
@@ -1051,7 +1052,7 @@ async function concluirProdutorTomador(pendente, produtor, origemSelecao) {
 }
 
 async function clicarBotaoCalculadoraFrete(pendente) {
-    const botao = await aguardarBotaoCalculadoraFrete(TIMEOUT_CTE_MS);
+    const botao = await aguardarBotaoCalculadoraFrete(TIMEOUT_CALCULADORA_MS);
 
     if (!botao) {
         console.warn("Botao da calculadora de frete nao encontrado no Simples CTE.", {
@@ -1118,20 +1119,6 @@ async function preencherCalculadoraFrete(pendente) {
     const placaOk = await preencherVeiculoTracaoCalculadora(pendente);
 
     if (!placaOk) return false;
-
-    const contratoOk = await selecionarOpcaoSelectPorRotulo(
-        "O QUE ESTA SENDO CONTRATADO",
-        "SOMENTE VEICULO TRACAO CAVALO",
-        0
-    );
-
-    if (!contratoOk) {
-        console.warn("Campo O que esta sendo contratado nao encontrado/preenchido na calculadora de frete.", {
-            pendente,
-            camposVisiveis: listarCamposVisiveis()
-        });
-        return false;
-    }
 
     const cargaOk = await selecionarOpcaoSelectPorRotulo(
         "TIPO DE CARGA",
@@ -1310,14 +1297,18 @@ async function aguardarBotaoCalculadoraFrete(timeout) {
 }
 
 function encontrarBotaoCalculadoraFrete() {
-    const icone = document.querySelector("svg[data-icon-name='line-calculator-solid']");
-    const botaoPorIcone = icone?.closest("button, [role='button'], .MuiButtonBase-root");
+    const botoesPorIcone = Array.from(document.querySelectorAll(
+        "svg[data-icon-name='line-calculator-solid'], svg[data-icon-name*='calculator']"
+    ))
+        .map((icone) => icone.closest("button, [role='button'], .MuiButtonBase-root"))
+        .filter(Boolean)
+        .filter(isVisivel)
+        .filter((elemento) => !elemento.disabled && elemento.getAttribute("aria-disabled") !== "true");
 
-    if (botaoPorIcone && isVisivel(botaoPorIcone) && !botaoPorIcone.disabled) {
-        return botaoPorIcone;
-    }
+    if (botoesPorIcone.length) return botoesPorIcone[0];
 
     const botoes = Array.from(document.querySelectorAll([
+        "button:has(svg[data-icon-name='line-calculator-solid'])",
         "button.MuiButton-neutralPrimary",
         "button.MuiButtonBase-root",
         "button"
@@ -2269,6 +2260,10 @@ async function aguardarCampoTomador(timeout) {
 }
 
 function encontrarCampoTomador() {
+    const campoAssociadoAoRotulo = encontrarCampoTomadorPorRotulo();
+
+    if (campoAssociadoAoRotulo) return campoAssociadoAoRotulo;
+
     const campos = obterCamposPossiveisTomador();
     const campoPorPlaceholder = campos.find(campoTemTextoTomador);
 
@@ -2303,6 +2298,30 @@ function encontrarCampoTomador() {
             retangulosSobrepoemHorizontalmente(rectRotulo, item.rect)
         )
         .sort((a, b) => (a.rect.top - b.rect.top) || (a.rect.left - b.rect.left))[0]?.campo || null;
+}
+
+function encontrarCampoTomadorPorRotulo() {
+    const rotulos = Array.from(document.querySelectorAll("label"));
+    const rotulo = rotulos.find((elemento) => {
+        const destino = normalizar(elemento.getAttribute("for") || "");
+        const texto = normalizar(elemento.textContent || "");
+
+        return destino.includes("ENVOLVIDOS TIPO TOMADOR") ||
+            texto.includes("TOMADOR") ||
+            texto.includes("QUEM PAGARA A SUA EMPRESA PELO FRETE");
+    });
+
+    if (!rotulo) return null;
+
+    const idCampo = rotulo.getAttribute("for");
+    const campoPorId = idCampo ? document.getElementById(idCampo) : null;
+
+    if (campoPorId && isVisivel(campoPorId)) return campoPorId;
+
+    const bloco = rotulo.closest(".line-grid") || rotulo.parentElement?.parentElement;
+    const input = bloco?.querySelector("input[type='text'], input:not([type]), [role='combobox']");
+
+    return input && isVisivel(input) ? input : null;
 }
 
 function campoTemTextoTomador(campo) {

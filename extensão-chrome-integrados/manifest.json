@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Busca de Produtores",
+  "version": "1.2",
+  "description": "Extensão para buscar produtores e KM",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": [],
+  "host_permissions": [
+    "file:///*"
+  ]
+}

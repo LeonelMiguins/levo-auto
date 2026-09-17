@@ -12,7 +12,8 @@
 
   "host_permissions": [
     "*://www.repom.com.br/*",
-    "*://app.simplescte.com.br/*"
+    "*://app.simplescte.com.br/*",
+    "file:///*"
   ],
 
   "icons": {

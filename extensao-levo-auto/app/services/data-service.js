@@ -1,5 +1,15 @@
+const URL_PRODUTORES_COMPARTILHADOS = "file:///D:/PROJETOS/pedagio-auto/dados-compartilhados/produtores-km.json";
+
 export async function carregarJson(caminho) {
-    const resposta = await fetch(chrome.runtime.getURL(caminho));
+    const url = caminho === "data/produtores-km.json"
+        ? URL_PRODUTORES_COMPARTILHADOS
+        : chrome.runtime.getURL(caminho);
+    const resposta = await fetch(url);
+
+    if (!resposta.ok) {
+        throw new Error(`Falha ao carregar JSON (${resposta.status}): ${url}`);
+    }
+
     return resposta.json();
 }
 

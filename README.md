@@ -1,5 +1,14 @@
 # levo-auto
 
+## Base compartilhada de produtores
+
+A fonte oficial de quilometragem das duas extensões é
+`dados-compartilhados/produtores-km.json`. Tanto `extensao-levo-auto` quanto
+`extensão-chrome-integrados` leem esse arquivo diretamente.
+
+Como a base usa uma URL `file://`, ative **Permitir acesso a URLs de arquivo**
+nos detalhes das duas extensões em `chrome://extensions`.
+
 Automacao operacional em extensao Chrome para leitura de XML de NF-e, emissao de pedagio no Repom e preparacao de CTe no Simples CTE.
 
 ## O que a extensao faz

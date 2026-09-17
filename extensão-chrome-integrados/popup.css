@@ -1,0 +1,128 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 350px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 400px;
+}
+
+.container {
+  padding: 20px;
+}
+
+h1 {
+  color: white;
+  font-size: 20px;
+  margin-bottom: 5px;
+  text-align: center;
+}
+
+p {
+  font-size: 15px;
+  text-align: center;
+  color: azure;
+  margin-bottom: 15px;
+}
+
+#searchInput {
+  width: 100%;
+  padding: 12px 15px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  outline: none;
+  transition: box-shadow 0.3s ease;
+}
+
+#searchInput:focus {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+#results {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.results-list {
+  list-style: none;
+}
+
+.result-item {
+  background: white;
+  padding: 12px 15px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.result-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.produtor-info {
+  min-width: 0;
+}
+
+.produtor-name {
+  display: block;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.produtor-city {
+  display: block;
+  color: #666;
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+.produtor-cood {
+  white-space: nowrap;
+  font-size: 10px;
+}
+
+.km-value {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.no-results {
+  color: white;
+  text-align: center;
+  padding: 20px;
+  font-size: 14px;
+}
+
+#results::-webkit-scrollbar {
+  width: 6px;
+}
+
+#results::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+#results::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}

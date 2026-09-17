@@ -5,5 +5,6 @@ extensao-levo-auto/app.zip
 *.exe
 *.zip
 node_modules/
+NFs de BASE/
 .DS_Store
 Thumbs.db
