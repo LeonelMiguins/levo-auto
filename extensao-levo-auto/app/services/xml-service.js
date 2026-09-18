@@ -19,6 +19,18 @@ export function extrairNfe(xmlTexto, nomeArquivo) {
         throw new Error(`Arquivo sem NF-e reconhecida: ${nomeArquivo}`);
     }
 
+    const placa = extrairPlaca(doc, veicTransp, ler, xmlTexto);
+
+    if (!placa) {
+        console.warn("Placa nao encontrada no XML da NF-e.", {
+            arquivo: nomeArquivo,
+            emitente: ler("xNome", emit),
+            possuiVeiculoTransporte: Boolean(veicTransp),
+            possuiObservacaoPlaca: /xCampo\s*=\s*["'][^"']*placa/i.test(xmlTexto),
+            possuiPlacaTextoComplementar: /PLACA(?:\s+CAVALO)?\s*:/i.test(xmlTexto)
+        });
+    }
+
     return {
         arquivo: nomeArquivo,
         chave: ler("chNFe") || (infNFe.getAttribute("Id") || "").replace(/^NFe/, ""),
@@ -39,8 +51,57 @@ export function extrairNfe(xmlTexto, nomeArquivo) {
         valor: numeroDecimal(ler("vProd", prod)),
         pesoLiquido: numeroDecimal(ler("pesoL", vol)),
         pesoBruto: numeroDecimal(ler("pesoB", vol)),
-        placa: ler("placa", veicTransp)
+        placa
     };
+}
+
+function extrairPlaca(doc, veicTransp, ler, xmlTexto) {
+    const placaVeiculo = normalizarPlaca(ler("placa", veicTransp));
+
+    if (placaVeiculo) return placaVeiculo;
+
+    const observacaoPlaca = Array.from(doc.getElementsByTagName("obsCont"))
+        .find((observacao) =>
+            String(observacao.getAttribute("xCampo") || "")
+                .toUpperCase()
+                .includes("PLACA")
+        );
+    const placaObservacao = observacaoPlaca
+        ? normalizarPlaca(ler("xTexto", observacaoPlaca))
+        : "";
+
+    if (placaObservacao) return placaObservacao;
+
+    const textoComplementar = ler("infCpl");
+    const placaNoTexto = textoComplementar.match(
+        /PLACA(?:\s+CAVALO)?\s*:\s*([A-Z]{3}[0-9A-Z][A-Z0-9][0-9]{2})/i
+    )?.[1];
+
+    const placaComplementar = normalizarPlaca(placaNoTexto);
+
+    if (placaComplementar) return placaComplementar;
+
+    const placaObservacaoXml = String(xmlTexto || "").match(
+        /<(?:(?:\w+):)?obsCont\b[^>]*xCampo\s*=\s*["'][^"']*placa[^"']*["'][^>]*>[\s\S]*?<(?:(?:\w+):)?xTexto\b[^>]*>\s*([A-Z]{3}[0-9A-Z][A-Z0-9][0-9]{2})\s*<\//i
+    )?.[1];
+
+    if (placaObservacaoXml) return normalizarPlaca(placaObservacaoXml);
+
+    const placaTextoXml = String(xmlTexto || "").match(
+        /PLACA(?:\s+CAVALO)?\s*:\s*([A-Z]{3}[0-9A-Z][A-Z0-9][0-9]{2})/i
+    )?.[1];
+
+    return normalizarPlaca(placaTextoXml);
+}
+
+function normalizarPlaca(valor) {
+    const placa = String(valor || "")
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, "");
+
+    return /^[A-Z]{3}[0-9A-Z][A-Z0-9][0-9]{2}$/.test(placa)
+        ? placa
+        : "";
 }
 
 export function numeroDecimal(valor) {
