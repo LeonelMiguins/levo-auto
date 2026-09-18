@@ -1736,14 +1736,43 @@ async function preencherObservacaoGeralComKm(pendente, distancia) {
 
     const sufixo = `-- ${formatarDistanciaCalculadora(km)} km`;
     const valorAtual = textoLimpo(textarea.value || "");
-    const valorNormalizado = normalizar(valorAtual);
+    let valorBase = valorAtual;
+
+    if (servicoEhPluma(pendente)) {
+        const placa = normalizarPlaca(obterPlaca(pendente));
+
+        if (!placa) {
+            console.warn("Placa nao encontrada para preencher as observacoes do CTE da PLUMA.", pendente);
+            return false;
+        }
+
+        if (!normalizarPlaca(valorBase).includes(placa)) {
+            valorBase = `${placa}${valorBase ? ` ${valorBase}` : ""}`;
+        }
+    }
+
+    const valorNormalizado = normalizar(valorBase);
     const sufixoNormalizado = normalizar(sufixo);
     const novoValor = valorNormalizado.includes(sufixoNormalizado) ?
-        valorAtual :
-        `${valorAtual}${valorAtual ? " " : ""}${sufixo}`;
+        valorBase :
+        `${valorBase}${valorBase ? " " : ""}${sufixo}`;
 
     await preencherTextarea(textarea, novoValor);
     return true;
+}
+
+function servicoEhPluma(pendente) {
+    const servico = pendente?.servico || {};
+    const grupo = obterGrupoCteAtual(pendente);
+    const textosEmpresa = [
+        pendente?.pedagio?.empresa,
+        servico?.resumo?.emitente,
+        servico?.emitente,
+        grupo?.emitente,
+        ...(Array.isArray(servico?.nfs) ? servico.nfs.map((nf) => nf?.emitente) : [])
+    ];
+
+    return textosEmpresa.some((texto) => normalizar(texto).includes("PLUMA"));
 }
 
 async function aguardarTextareaObservacaoGeral(timeout) {
