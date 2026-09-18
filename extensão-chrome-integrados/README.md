@@ -24,6 +24,15 @@ As duas extensões usam a mesma fonte de dados. Edite somente:
 As duas extensões leem esse arquivo diretamente. Ative **Permitir acesso a URLs
 de arquivo** nos detalhes de ambas em `chrome://extensions`.
 
+Em outro computador, edite `URL_PRODUTORES_COMPARTILHADOS` em `popup.js` e a
+mesma constante em `../extensao-levo-auto/app/services/data-service.js`. As duas
+devem usar a URL `file:///` completa do mesmo arquivo. Exemplo:
+
+```js
+const URL_PRODUTORES_COMPARTILHADOS =
+  'file:///C:/Projetos/pedagio-auto/dados-compartilhados/produtores-km.json';
+```
+
 O arquivo usa o formato:
 
 ```json

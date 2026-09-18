@@ -9,6 +9,26 @@ A fonte oficial de quilometragem das duas extensões é
 Como a base usa uma URL `file://`, ative **Permitir acesso a URLs de arquivo**
 nos detalhes das duas extensões em `chrome://extensions`.
 
+### Configurar o caminho em outro computador
+
+O caminho da base compartilhada é absoluto e precisa ser ajustado em cada
+computador depois de baixar o projeto. Altere a constante
+`URL_PRODUTORES_COMPARTILHADOS` nestes dois arquivos:
+
+- `extensao-levo-auto/app/services/data-service.js`
+- `extensão-chrome-integrados/popup.js`
+
+Os dois arquivos devem apontar para o mesmo `produtores-km.json`. Exemplo para
+um projeto baixado em `C:\Projetos\pedagio-auto`:
+
+```js
+const URL_PRODUTORES_COMPARTILHADOS =
+    "file:///C:/Projetos/pedagio-auto/dados-compartilhados/produtores-km.json";
+```
+
+Na URL, use barras `/`, mantenha `file:///` no início e não use o formato
+`C:\Projetos\...` diretamente no JavaScript.
+
 Automacao operacional em extensao Chrome para leitura de XML de NF-e, emissao de pedagio no Repom e preparacao de CTe no Simples CTE.
 
 ## O que a extensao faz
@@ -49,7 +69,8 @@ extensao-levo-auto/
 Arquivos versionados:
 
 - `data/caminhoes.json`: placas, motoristas e transportadoras.
-- `data/produtores-km.json`: produtores e distancias.
+- `../dados-compartilhados/produtores-km.json`: produtores e distancias usados
+  pelas duas extensoes.
 - `data/users.example.json`: exemplo da estrutura de usuarios.
 
 Arquivo nao versionado:
@@ -74,10 +95,29 @@ Formato de usuario:
 
 ## Como carregar no Chrome
 
-1. Acesse `chrome://extensions`.
-2. Ative o modo desenvolvedor.
-3. Clique em `Carregar sem compactacao`.
-4. Selecione a pasta `extensao-levo-auto`.
+1. Ajuste `URL_PRODUTORES_COMPARTILHADOS` nos dois arquivos indicados acima.
+2. Crie `extensao-levo-auto/data/users.json` a partir de
+   `extensao-levo-auto/data/users.example.json` e preencha os usuarios locais.
+3. Acesse `chrome://extensions`.
+4. Ative o modo desenvolvedor.
+5. Clique em `Carregar sem compactacao` e selecione `extensao-levo-auto`.
+6. Se usar a extensao auxiliar, carregue tambem `extensão-chrome-integrados`.
+7. Abra **Detalhes** de cada extensao e habilite **Permitir acesso a URLs de
+   arquivo**.
+8. Recarregue as extensoes depois de alterar o caminho, o manifest ou os
+   arquivos JavaScript.
+
+### Checklist depois de baixar do GitHub
+
+- O arquivo `dados-compartilhados/produtores-km.json` existe no caminho usado
+  pelas duas constantes.
+- As duas constantes usam uma URL `file:///` correspondente ao computador.
+- `extensao-levo-auto/data/users.json` foi criado; ele não vem do GitHub porque
+  contém credenciais e está no `.gitignore`.
+- **Permitir acesso a URLs de arquivo** está habilitado nas duas extensoes.
+- As pastas corretas foram carregadas sem compactacao, e não a raiz inteira do
+  repositorio.
+- As extensoes foram recarregadas em `chrome://extensions` após a configuracao.
 
 ## Fluxo operacional
 
