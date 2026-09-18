@@ -15,6 +15,16 @@ fetch(URL_PRODUTORES_COMPARTILHADOS)
   .catch(error => {
     console.error('Erro ao carregar dados:', error);
     resultsDiv.innerHTML = '<p class="no-results">Nao foi possivel carregar a base compartilhada.</p>';
+    alert([
+      'Nao foi possivel carregar a base compartilhada de produtores.',
+      '',
+      `Caminho configurado: ${URL_PRODUTORES_COMPARTILHADOS}`,
+      '',
+      'Corrija URL_PRODUTORES_COMPARTILHADOS em:',
+      'extensao-chrome-integrados/popup.js',
+      '',
+      "Depois habilite 'Permitir acesso a URLs de arquivo' e recarregue a extensao."
+    ].join('\n'));
   });
 
 // Elementos do DOM
