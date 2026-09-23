@@ -156,7 +156,7 @@ async function preencherValePedagio(modal, dados, botao) {
     const fornecedorOk = await preencherFornecedorVale(campoFornecedor);
 
     atualizarBotaoProcessando(botao, "Responsavel...");
-    const responsavelOk = await preencherAutocomplete(campoResponsavel, dados.responsavel);
+    const responsavelOk = await preencherResponsavelVale(campoResponsavel, dados.responsavel);
 
     atualizarBotaoProcessando(botao, "Eixos...");
     const eixosOk = await preencherEixos(campoEixos, dados.eixos);
@@ -256,6 +256,96 @@ async function preencherFornecedorVale(input) {
     }
 
     return aguardarValorFornecedorVale(input, 3500);
+}
+
+async function preencherResponsavelVale(input, responsavel) {
+    if (valorResponsavelValeConfere(input, responsavel)) return true;
+
+    const nomeEmpresa = String(responsavel || "").split("-")[0].trim();
+
+    await abrirOpcoesAutocomplete(input);
+    await preencherInputTextoDigitando(input, nomeEmpresa);
+
+    let opcao = await aguardarOpcaoResponsavelVale(responsavel, TIMEOUT_AUTOCOMPLETE_MS);
+
+    if (!opcao) {
+        const cnpj = String(responsavel || "").match(/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/)?.[0] || "";
+
+        if (cnpj) {
+            await preencherInputTextoDigitando(input, cnpj);
+            opcao = await aguardarOpcaoResponsavelVale(responsavel, TIMEOUT_AUTOCOMPLETE_MS);
+        }
+    }
+
+    if (!opcao) {
+        console.warn("Opcao correta do responsavel pelo Vale-Pedagio nao encontrada.", {
+            responsavel,
+            valorDigitado: input.value
+        });
+        return false;
+    }
+
+    await clicarElemento(opcao);
+    await sleep(500);
+    input.blur?.();
+
+    return aguardarValorResponsavelVale(input, responsavel, 3500);
+}
+
+async function aguardarOpcaoResponsavelVale(responsavel, timeout) {
+    const inicio = Date.now();
+    const esperado = normalizarBusca(responsavel);
+    const cnpjEsperado = String(responsavel || "").replace(/\D/g, "").slice(-14);
+    const nomeEsperado = normalizarBusca(String(responsavel || "").split("-")[0]);
+
+    while (Date.now() - inicio < timeout) {
+        const opcao = Array.from(document.querySelectorAll([
+            "[role='option']",
+            ".MuiAutocomplete-option",
+            ".MuiAutocomplete-popper li",
+            "[role='listbox'] li"
+        ].join(",")))
+            .filter(isVisivel)
+            .find((elemento) => {
+                const texto = normalizarBusca(elemento.textContent);
+                const documento = String(elemento.textContent || "").replace(/\D/g, "");
+
+                return texto === esperado || (
+                    texto.includes(nomeEsperado) &&
+                    Boolean(cnpjEsperado) &&
+                    documento.includes(cnpjEsperado)
+                );
+            });
+
+        if (opcao) return encontrarElementoClicavelOpcao(opcao);
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+async function aguardarValorResponsavelVale(input, responsavel, timeout) {
+    const inicio = Date.now();
+
+    while (Date.now() - inicio < timeout) {
+        if (valorResponsavelValeConfere(input, responsavel)) return true;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return false;
+}
+
+function valorResponsavelValeConfere(input, responsavel) {
+    const atual = normalizarBusca(input.value || input.getAttribute("value") || "");
+    const nomeEsperado = normalizarBusca(String(responsavel || "").split("-")[0]);
+    const cnpjEsperado = String(responsavel || "").replace(/\D/g, "").slice(-14);
+    const documentoAtual = String(input.value || input.getAttribute("value") || "").replace(/\D/g, "");
+
+    return atual.includes(nomeEsperado) &&
+        Boolean(cnpjEsperado) &&
+        documentoAtual.includes(cnpjEsperado);
 }
 
 async function garantirFornecedorValePreenchido(input) {
