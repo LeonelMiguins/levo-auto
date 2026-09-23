@@ -8,24 +8,35 @@
 </head>
 <body class="bloqueado">
     <section id="loginView" class="login-shell">
-        <form id="loginForm" class="login-card">
-            <p class="eyebrow">Acesso</p>
-            <h2>LEVO AUTO - AUTOMAÇÃO REPOM E SIMPLES CTE</h2>
-            <p>Entre em contato: leomiguins@gmail.com</p>
+        <div class="login-layout">
+            <div class="login-hero" aria-hidden="true">
+                <div class="login-brand">
+                    <p class="eyebrow">AUTOMACAO REPOM E SIMPLES CTE</p>
+                    <h1>LEVO AUTO</h1>
+                </div>
+                <img class="login-mascot" src="assets/mascote.png" alt="">
+            </div>
 
-            <label>
-                Usuario
-                <input id="loginNome" autocomplete="username" required>
-            </label>
+            <form id="loginForm" class="login-card">
+                <p class="eyebrow">Acesso seguro</p>
+                <h2>Entre na automacao</h2>
+                <p class="login-copy">Informe suas credenciais para iniciar os processos de pedagio e CTE.</p>
 
-            <label>
-                Senha
-                <input id="loginSenha" type="password" autocomplete="current-password" required>
-            </label>
+                <label>
+                    Usuario
+                    <input id="loginNome" autocomplete="username" placeholder="Seu usuario" required>
+                </label>
 
-            <p id="loginStatus" class="login-status">Entre para iniciar a automacao.</p>
-            <button class="primary" type="submit">Entrar</button>
-        </form>
+                <label>
+                    Senha
+                    <input id="loginSenha" type="password" autocomplete="current-password" placeholder="Sua senha" required>
+                </label>
+
+                <p id="loginStatus" class="login-status">Entre para iniciar a automacao.</p>
+                <button class="primary login-submit" type="submit">Entrar</button>
+                <p class="login-contact">Suporte: leomiguins@gmail.com</p>
+            </form>
+        </div>
     </section>
 
     <main id="appView" class="shell">

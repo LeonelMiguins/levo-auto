@@ -27,19 +27,96 @@ body:not(.bloqueado) #loginView {
     min-height: 100vh;
     display: grid;
     place-items: center;
-    padding: 24px;
+    padding: 32px;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 18% 18%, rgba(251, 191, 36, .28), transparent 32%),
+        radial-gradient(circle at 72% 72%, rgba(124, 58, 237, .18), transparent 35%),
+        linear-gradient(135deg, #fff7ed 0%, #f8fafc 46%, #eef2ff 100%);
+}
+
+.login-layout {
+    width: min(1120px, 100%);
+    min-height: min(720px, calc(100vh - 64px));
+    display: grid;
+    grid-template-columns: minmax(0, 1.18fr) minmax(360px, .82fr);
+    align-items: center;
+    gap: 28px;
+}
+
+.login-hero {
+    position: relative;
+    min-height: 640px;
+    display: grid;
+    align-items: end;
+    isolation: isolate;
+}
+
+.login-hero::before {
+    position: absolute;
+    inset: 58px 16px 54px 34px;
+    z-index: -1;
+    border-radius: 8px;
+    background:
+        linear-gradient(150deg, rgba(88, 28, 135, .92), rgba(127, 29, 29, .84) 54%, rgba(245, 158, 11, .76)),
+        #3b0f4f;
+    box-shadow: 0 28px 80px rgba(88, 28, 135, .22);
+    content: "";
+}
+
+.login-brand {
+    position: absolute;
+    top: 92px;
+    left: 72px;
+    max-width: 360px;
+    color: #ffffff;
+    text-shadow: 0 2px 16px rgba(15, 23, 42, .32);
+}
+
+.login-brand .eyebrow {
+    color: rgba(255, 255, 255, .78);
+}
+
+.login-brand h1 {
+    font-size: clamp(44px, 7vw, 82px);
+    line-height: .92;
+}
+
+.login-mascot {
+    width: min(610px, 92%);
+    max-height: 670px;
+    justify-self: center;
+    object-fit: contain;
+    filter: drop-shadow(0 34px 34px rgba(15, 23, 42, .26));
 }
 
 .login-card {
-    width: min(420px, 100%);
+    width: min(440px, 100%);
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding: 28px;
-    background: #ffffff;
-    border: 1px solid #dbe3ef;
+    gap: 18px;
+    justify-self: end;
+    padding: 34px;
+    background: rgba(255, 255, 255, .93);
+    border: 1px solid rgba(219, 227, 239, .9);
     border-radius: 8px;
-    box-shadow: 0 20px 50px rgba(15, 23, 42, .10);
+    box-shadow: 0 24px 60px rgba(15, 23, 42, .14);
+    backdrop-filter: blur(12px);
+}
+
+.login-card h2 {
+    color: #111827;
+    font-size: 30px;
+    line-height: 1.1;
+    margin-bottom: 0;
+}
+
+.login-copy,
+.login-contact {
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 700;
 }
 
 .login-status {
@@ -52,6 +129,16 @@ body:not(.bloqueado) #loginView {
 
 .login-status.error {
     color: #b42318;
+}
+
+.login-submit {
+    width: 100%;
+    margin-top: 2px;
+}
+
+.login-contact {
+    text-align: center;
+    font-size: 12px;
 }
 
 .shell {
@@ -201,6 +288,7 @@ input {
     padding: 0 12px;
     color: #172033;
     font-size: 15px;
+    background: #ffffff;
 }
 
 input:focus {
@@ -450,6 +538,47 @@ button:disabled {
 }
 
 @media (max-width: 760px) {
+    .login-shell {
+        padding: 18px;
+    }
+
+    .login-layout {
+        min-height: auto;
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .login-hero {
+        min-height: 240px;
+        align-items: end;
+    }
+
+    .login-hero::before {
+        inset: 18px 0 8px;
+    }
+
+    .login-brand {
+        top: 34px;
+        left: 24px;
+    }
+
+    .login-brand h1 {
+        font-size: 42px;
+    }
+
+    .login-mascot {
+        width: min(300px, 88%);
+        max-height: 250px;
+        justify-self: end;
+        margin-right: 4px;
+    }
+
+    .login-card {
+        width: 100%;
+        justify-self: stretch;
+        padding: 24px;
+    }
+
     .header,
     .button-row {
         align-items: stretch;
