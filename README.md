@@ -1,83 +1,118 @@
-# levo-auto
+<div align="center">
+  <img src="img/mascote.png" alt="Mascote da Levo Auto" width="230">
 
-## Base compartilhada de produtores
+  # LEVO AUTO
 
-A fonte oficial de quilometragem das duas extensões é
-`dados-compartilhados/produtores-km.json`. Tanto `extensao-levo-auto` quanto
-`extensão-chrome-integrados` leem esse arquivo diretamente.
+  **Automação operacional para vale-pedágio e emissão de CT-e**
 
-Como a base usa uma URL `file://`, ative **Permitir acesso a URLs de arquivo**
-nos detalhes das duas extensões em `chrome://extensions`.
+  Uma extensão Chrome que transforma XMLs de NF-e em um fluxo integrado entre
+  REPOM e Simples CTE, reduzindo tarefas repetitivas e mantendo os dados da
+  operação organizados em um único lugar.
 
-### Configurar o caminho em outro computador
+  `Chrome` &nbsp; `Manifest V3` &nbsp; `JavaScript` &nbsp; `Automação operacional`
+</div>
 
-O caminho da base compartilhada é absoluto e precisa ser ajustado em cada
-computador depois de baixar o projeto. Altere a constante
-`URL_PRODUTORES_COMPARTILHADOS` nestes dois arquivos:
+---
 
-- `extensao-levo-auto/app/services/data-service.js`
-- `extensão-chrome-integrados/popup.js`
+## Visão geral
 
-Os dois arquivos devem apontar para o mesmo `produtores-km.json`. Exemplo para
-um projeto baixado em `C:\Projetos\pedagio-auto`:
+O LEVO AUTO lê os XMLs de NF-e selecionados pelo usuário, identifica os dados
+da viagem e conduz o processo desde a preparação do vale-pedágio até o início
+do CT-e.
 
-```js
-const URL_PRODUTORES_COMPARTILHADOS =
-    "file:///C:/Projetos/pedagio-auto/dados-compartilhados/produtores-km.json";
+```text
+XMLs de NF-e  ->  validação e agrupamento  ->  REPOM  ->  Simples CTE
 ```
 
-Na URL, use barras `/`, mantenha `file:///` no início e não use o formato
-`C:\Projetos\...` diretamente no JavaScript.
+O projeto também inclui a extensão auxiliar **Busca de Produtores**, usada para
+consultar produtores e distâncias a partir da mesma base compartilhada.
 
-Automacao operacional em extensao Chrome para leitura de XML de NF-e, emissao de pedagio no Repom e preparacao de CTe no Simples CTE.
+## Serviços integrados
 
-## O que a extensao faz
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="img/repom.jpg" alt="Logo REPOM" width="150"><br>
+      <strong>REPOM</strong>
+    </td>
+    <td align="center" width="50%">
+      <img src="img/simples-cte.png" alt="Logo Simples CTE" width="150"><br>
+      <strong>Simples CTE</strong>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      No fluxo do LEVO AUTO, o REPOM é responsável pela emissão do
+      vale-pedágio. A extensão reutiliza uma aba do sistema, realiza o login de
+      acordo com a empresa emissora, preenche a viagem e captura o número do
+      pedágio, o meio de pagamento, o valor e a empresa utilizada.
+    </td>
+    <td valign="top">
+      O Simples CTE recebe os dados preparados pela extensão para iniciar a
+      emissão do CT-e. O LEVO AUTO seleciona a transportadora, envia as chaves
+      das NF-e por grupo de produtor e preenche informações de frete e
+      vale-pedágio obtidas durante a operação.
+    </td>
+  </tr>
+</table>
 
-- Le XMLs de NF-e selecionados na tela local da extensao.
-- Extrai placa, produtor, cidade, notas, chaves de acesso, peso e valor.
-- Valida se todas as notas selecionadas pertencem ao mesmo caminhao.
-- Agrupa notas por produtor para evitar CTe globalizado indevido.
-- Calcula a cidade/distancia de pedagio pela nota mais distante.
-- Valida placa com a base `data/caminhoes.json`.
-- Reutiliza uma unica aba do Repom.
-- Faz auto-login no Repom conforme a empresa emissora e o usuario logado.
-- Automatiza a emissao/confirmacao do pedagio no Repom.
-- Captura numero do pedagio, meio de pagamento, valor e empresa emitida.
-- Mantem historico local de pedagios por usuario.
-- Inicia o fluxo do Simples CTE, seleciona transportadora e carrega chaves por grupo de produtor.
-- Preenche a calculadora de frete minimo com placa, tipo de contratacao, tipo de carga e distancia de ida.
+> As marcas REPOM e Simples CTE pertencem aos seus respectivos titulares. Elas
+> são exibidas aqui apenas para identificar os sistemas integrados ao projeto.
 
-## Estrutura principal
+## Principais recursos
 
-```txt
-extensao-levo-auto/
-  app/                         Tela local da extensao
-  app/services/                Servicos de XML, storage, sessao, dados e lancadores
-  automation/                  Engine de automacao e rotinas do Repom
-  content/repom/               Scripts especificos das paginas Repom
-  content/simples-cte/         Scripts especificos do Simples CTE
-  data/                        Bases locais usadas pela extensao
-  icon/                        Icones da extensao
-  shared/                      Constantes, formatadores e helpers compartilhados
-  background.js                Service worker da extensao
-  content.js                   Roteador dos content scripts
-  manifest.json                Manifest V3 da extensao
+- Leitura de vários XMLs de NF-e em uma única operação.
+- Extração de placa, produtor, município, notas, chaves de acesso, peso e valor.
+- Validação para impedir a mistura de notas de caminhões diferentes.
+- Agrupamento por produtor para evitar CT-e globalizado indevido.
+- Cálculo do destino e da distância de pedágio pela nota mais distante.
+- Validação da placa na base local de caminhões.
+- Login e preenchimento automatizados no REPOM.
+- Captura e histórico local dos pedágios emitidos, separados por usuário.
+- Preparação do CT-e no Simples CTE por grupo de produtor.
+- Preenchimento da calculadora de frete mínimo com os dados da viagem.
+- Reutilização das abas dos serviços para manter o fluxo mais organizado.
+
+## Fluxo operacional
+
+1. Abra o LEVO AUTO e entre com seu usuário.
+2. Selecione um ou mais XMLs de NF-e.
+3. Confira a placa, a cidade, a nota inicial, a quantidade e os grupos de produtores.
+4. Para viagens com pedágio, clique em **Fazer REPOM**.
+5. Aguarde a emissão e confira os dados capturados no painel da extensão.
+6. Clique em **Fazer CTE**.
+7. No Simples CTE, revise as chaves e os dados preenchidos para concluir o CT-e.
+
+## Estrutura do projeto
+
+```text
+pedagio-auto/
+|-- dados-compartilhados/             Base de produtores e quilometragens
+|-- extensao-levo-auto/               Extensão principal
+|   |-- app/                          Interface local da extensão
+|   |-- app/services/                 XML, sessão, storage, dados e lançadores
+|   |-- automation/                   Engine e rotinas de automação do REPOM
+|   |-- content/repom/                Integração com as páginas do REPOM
+|   |-- content/simples-cte/          Integração com o Simples CTE
+|   |-- data/                         Caminhões e configurações locais
+|   |-- icon/                         Ícones da extensão
+|   |-- shared/                       Constantes, formatadores e helpers
+|   |-- background.js                 Service worker
+|   |-- content.js                    Roteador dos content scripts
+|   `-- manifest.json                 Manifest V3
+|-- extensão-chrome-integrados/       Busca auxiliar de produtores e KM
+|-- img/                              Mascote e logos usadas neste README
+`-- README.md
 ```
 
-## Dados locais
+## Instalação no Chrome
 
-Arquivos versionados:
+### 1. Configure os usuários locais
 
-- `data/caminhoes.json`: placas, motoristas e transportadoras.
-- `../dados-compartilhados/produtores-km.json`: produtores e distancias usados
-  pelas duas extensoes.
-- `data/users.example.json`: exemplo da estrutura de usuarios.
+Crie o arquivo `extensao-levo-auto/data/users.json` com base em
+`extensao-levo-auto/data/users.example.json` e preencha as credenciais locais.
 
-Arquivo nao versionado:
-
-- `data/users.json`: contem senhas e credenciais reais. Deve ser criado localmente a partir de `data/users.example.json`.
-
-Formato de usuario:
+Exemplo da estrutura:
 
 ```json
 [
@@ -93,54 +128,75 @@ Formato de usuario:
 ]
 ```
 
-## Como carregar no Chrome
+> `users.json` contém credenciais reais e está no `.gitignore`. Nunca envie
+> esse arquivo para o repositório.
 
-1. Ajuste `URL_PRODUTORES_COMPARTILHADOS` nos dois arquivos indicados acima.
-2. Crie `extensao-levo-auto/data/users.json` a partir de
-   `extensao-levo-auto/data/users.example.json` e preencha os usuarios locais.
-3. Acesse `chrome://extensions`.
-4. Ative o modo desenvolvedor.
-5. Clique em `Carregar sem compactacao` e selecione `extensao-levo-auto`.
-6. Se usar a extensao auxiliar, carregue tambem `extensão-chrome-integrados`.
-7. Abra **Detalhes** de cada extensao e habilite **Permitir acesso a URLs de
-   arquivo**.
-8. Recarregue as extensoes depois de alterar o caminho, o manifest ou os
-   arquivos JavaScript.
+### 2. Configure a base compartilhada
 
-### Checklist depois de baixar do GitHub
+A fonte oficial de quilometragem das duas extensões é:
 
-- O arquivo `dados-compartilhados/produtores-km.json` existe no caminho usado
-  pelas duas constantes.
-- As duas constantes usam uma URL `file:///` correspondente ao computador.
-- `extensao-levo-auto/data/users.json` foi criado; ele não vem do GitHub porque
-  contém credenciais e está no `.gitignore`.
-- **Permitir acesso a URLs de arquivo** está habilitado nas duas extensoes.
-- As pastas corretas foram carregadas sem compactacao, e não a raiz inteira do
-  repositorio.
-- As extensoes foram recarregadas em `chrome://extensions` após a configuracao.
+```text
+dados-compartilhados/produtores-km.json
+```
 
-## Fluxo operacional
+Como a leitura usa uma URL local `file://`, ajuste a constante
+`URL_PRODUTORES_COMPARTILHADOS` nestes arquivos:
 
-1. Abra a extensao.
-2. Faca login na tela local.
-3. Selecione um ou mais XMLs de NF-e.
-4. Confirme placa, cidade, nota inicial, quantidade e grupos de produtores.
-5. Para viagens com pedagio, clique em `Fazer Repom`.
-6. Apos o Repom gerar o pedagio, confira os dados capturados no painel.
-7. Clique em `Fazer CTE`.
-8. No Simples CTE, a extensao carrega as chaves por grupo de produtor e preenche as primeiras etapas do CTe.
+- `extensao-levo-auto/app/services/data-service.js`
+- `extensão-chrome-integrados/popup.js`
 
-## Observacoes importantes
+Os dois caminhos devem apontar para o mesmo arquivo. Exemplo para um projeto em
+`C:\Projetos\pedagio-auto`:
 
-- A distancia usada para pagamento e pedagio e a distancia de ida.
-- Quando existem notas para produtores diferentes, a extensao agrupa por produtor e envia as chaves em lotes no Simples CTE.
-- Se forem selecionados XMLs com placas diferentes, a importacao e bloqueada.
-- O historico de pedagios fica no `chrome.storage.local`, separado por usuario.
-- A automacao depende dos componentes atuais das telas Repom e Simples CTE; mudancas visuais nesses sistemas podem exigir ajuste nos seletores.
+```js
+const URL_PRODUTORES_COMPARTILHADOS =
+  "file:///C:/Projetos/pedagio-auto/dados-compartilhados/produtores-km.json";
+```
 
-## Validacao local
+Use barras `/`, mantenha `file:///` no início e não use o caminho do Windows
+com barras invertidas diretamente no JavaScript.
 
-Para checar sintaxe dos scripts:
+### 3. Carregue as extensões
+
+1. Acesse `chrome://extensions`.
+2. Ative o **Modo do desenvolvedor**.
+3. Clique em **Carregar sem compactação**.
+4. Selecione a pasta `extensao-levo-auto`.
+5. Se usar a busca auxiliar, repita o processo com `extensão-chrome-integrados`.
+6. Abra os detalhes de cada extensão e habilite **Permitir acesso a URLs de arquivo**.
+7. Recarregue as extensões depois de alterar caminhos, manifests ou arquivos JavaScript.
+
+## Bases locais
+
+| Arquivo | Finalidade | Versionado |
+|---|---|:---:|
+| `extensao-levo-auto/data/caminhoes.json` | Placas, motoristas e transportadoras | Sim |
+| `dados-compartilhados/produtores-km.json` | Produtores e distâncias compartilhados | Sim |
+| `extensao-levo-auto/data/users.example.json` | Modelo da configuração de usuários | Sim |
+| `extensao-levo-auto/data/users.json` | Usuários e credenciais reais | Não |
+
+## Checklist de configuração
+
+- [ ] O arquivo `dados-compartilhados/produtores-km.json` existe.
+- [ ] As duas constantes apontam para a mesma URL `file:///`.
+- [ ] O arquivo local `extensao-levo-auto/data/users.json` foi criado.
+- [ ] O acesso a URLs de arquivo está habilitado nas duas extensões.
+- [ ] Cada extensão foi carregada a partir de sua própria pasta.
+- [ ] As extensões foram recarregadas depois das configurações.
+
+## Observações importantes
+
+- A distância usada no pagamento e no pedágio corresponde ao trajeto de ida.
+- Notas de produtores diferentes são separadas em grupos antes do envio ao Simples CTE.
+- A importação é bloqueada quando os XMLs selecionados possuem placas diferentes.
+- O histórico de pedágios fica no `chrome.storage.local`, separado por usuário.
+- A automação depende da estrutura atual das páginas do REPOM e do Simples CTE.
+  Alterações nesses sistemas podem exigir a atualização dos seletores.
+- Revise os dados preenchidos antes de concluir qualquer emissão nos serviços integrados.
+
+## Validação local
+
+Para verificar a sintaxe de todos os scripts JavaScript da extensão principal:
 
 ```powershell
 Get-ChildItem -Path "extensao-levo-auto" -Recurse -Filter *.js | ForEach-Object {
@@ -148,3 +204,11 @@ Get-ChildItem -Path "extensao-levo-auto" -Recurse -Filter *.js | ForEach-Object 
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 ```
+
+---
+
+<div align="center">
+  <img src="img/mascote.png" alt="Mascote da Levo Auto" width="90"><br>
+  <strong>LEVO AUTO</strong><br>
+  Menos repetição no processo. Mais foco na operação.
+</div>
