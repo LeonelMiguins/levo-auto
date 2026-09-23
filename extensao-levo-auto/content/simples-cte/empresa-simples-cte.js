@@ -356,12 +356,18 @@ async function aguardarXmlsGrupo(pendente) {
         return false;
     }
 
-    if (temProximoGrupoCte(pendente)) {
+    const pendenteComGrupoProcessado = registrarGrupoCteProcessado(pendente);
+
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.simplesCtePendente]: pendenteComGrupoProcessado
+    });
+
+    if (temProximoGrupoCte(pendenteComGrupoProcessado)) {
         const proximoPendente = {
-            ...pendente,
+            ...pendenteComGrupoProcessado,
             etapa: "nfe_clicado",
             atualizadoEm: Date.now(),
-            indiceGrupoCteAtual: obterIndiceGrupoCteAtual(pendente) + 1
+            indiceGrupoCteAtual: obterIndiceGrupoCteAtual(pendenteComGrupoProcessado) + 1
         };
 
         await chrome.storage.local.set({
@@ -379,7 +385,7 @@ async function aguardarXmlsGrupo(pendente) {
     }
 
     await clicarProximoDocumentosCarga({
-        ...pendente,
+        ...pendenteComGrupoProcessado,
         etapa: "proximo_chaves_clicado",
         atualizadoEm: Date.now()
     });
@@ -519,12 +525,18 @@ async function clicarProximoChaves(pendente) {
         return false;
     }
 
-    if (temProximoGrupoCte(pendenteAtualizado)) {
+    const pendenteComGrupoProcessado = registrarGrupoCteProcessado(pendenteAtualizado);
+
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.simplesCtePendente]: pendenteComGrupoProcessado
+    });
+
+    if (temProximoGrupoCte(pendenteComGrupoProcessado)) {
         const proximoPendente = {
-            ...pendenteAtualizado,
+            ...pendenteComGrupoProcessado,
             etapa: "nfe_clicado",
             atualizadoEm: Date.now(),
-            indiceGrupoCteAtual: obterIndiceGrupoCteAtual(pendenteAtualizado) + 1
+            indiceGrupoCteAtual: obterIndiceGrupoCteAtual(pendenteComGrupoProcessado) + 1
         };
 
         await chrome.storage.local.set({
@@ -541,7 +553,7 @@ async function clicarProximoChaves(pendente) {
         return true;
     }
 
-    await clicarProximoDocumentosCarga(pendenteAtualizado);
+    await clicarProximoDocumentosCarga(pendenteComGrupoProcessado);
     return true;
 }
 
@@ -565,6 +577,7 @@ async function aguardarBotaoDigitarChaveAcesso(timeout) {
 async function aguardarBuscaChavesDoGrupo(pendente, textoAntesBusca) {
     const inicio = Date.now();
     const textoAntes = normalizar(textoAntesBusca);
+    let confirmacoesPronto = 0;
 
     while (Date.now() - inicio < TIMEOUT_RECEITA_MS) {
         const tempoDecorrido = Date.now() - inicio;
@@ -575,21 +588,93 @@ async function aguardarBuscaChavesDoGrupo(pendente, textoAntesBusca) {
         const houveMudancaTela = textoAtual !== textoAntes;
         const grupoAtualVisivel = grupoCteAtualApareceNaTela(pendente);
         const precisaConfirmarGrupo = obterGruposCte(pendente).length > 1;
+        const botaoProximoDisponivel = encontrarBotaoProximoDocumentosCarga();
+        const documentosGrupoCarregados = documentosGrupoAparecemNaTabela(pendente);
+        const conteudoGrupoReconhecido = precisaConfirmarGrupo
+            ? documentosGrupoCarregados || grupoAtualVisivel
+            : documentosGrupoCarregados || houveMudancaTela || grupoAtualVisivel;
+        const aindaCarregando = carregando && !documentosGrupoCarregados;
 
         if (
-            modalDocumentosDisponivel &&
+            (modalDocumentosDisponivel || botaoProximoDisponivel) &&
             tempoDecorrido >= TEMPO_MINIMO_BUSCA_GRUPO_MS &&
-            !carregando &&
+            !aindaCarregando &&
             !formularioChavesAberto &&
-            (precisaConfirmarGrupo ? grupoAtualVisivel : houveMudancaTela || grupoAtualVisivel)
+            botaoProximoDisponivel &&
+            conteudoGrupoReconhecido
         ) {
-            return true;
+            confirmacoesPronto += 1;
+
+            if (confirmacoesPronto >= 2) return true;
+        } else {
+            confirmacoesPronto = 0;
         }
 
         await sleep(500);
     }
 
     return false;
+}
+
+function documentosGrupoAparecemNaTabela(pendente) {
+    const linhas = Array.from(document.querySelectorAll(
+        "#modal-root tbody tr[data-testid^='table-row-'], #modal-root tbody tr.data-table-table-row"
+    )).filter(isVisivel);
+
+    if (!linhas.length) return false;
+
+    const grupo = obterGrupoCteAtual(pendente);
+
+    if (!grupo) return true;
+
+    const textoTabela = normalizar(linhas.map((linha) => linha.textContent || "").join(" "));
+    const chaves = obterChavesEsperadasGrupo(grupo);
+
+    if (chaves.length) {
+        return chaves.every((chave) => textoTabela.includes(normalizar(chave)));
+    }
+
+    const notas = (Array.isArray(grupo.notas) ? grupo.notas : [])
+        .map((nota) => String(nota || "").replace(/\D/g, ""))
+        .filter(Boolean);
+
+    return !notas.length || notas.every((nota) => textoTabela.includes(nota));
+}
+
+function obterChavesEsperadasGrupo(grupo) {
+    const chavesDiretas = Array.isArray(grupo?.chavesAcesso) ? grupo.chavesAcesso : [];
+    const chavesXml = Array.isArray(grupo?.arquivosXml)
+        ? grupo.arquivosXml.map((arquivo) => arquivo?.chave || arquivo?.chaveAcesso)
+        : [];
+
+    return [...chavesDiretas, ...chavesXml]
+        .map((chave) => String(chave || "").replace(/\D/g, ""))
+        .filter((chave) => chave.length === 44);
+}
+
+function encontrarBotaoProximoDocumentosCarga() {
+    const seletores = [
+        "[data-testid='/cte--modal-Informe os documentos da carga--button-proximo']",
+        "button#cte-wizard-submit-button"
+    ];
+
+    for (const seletor of seletores) {
+        const botao = document.querySelector(seletor);
+
+        if (
+            botao &&
+            isVisivel(botao) &&
+            !botao.disabled &&
+            botao.getAttribute("aria-disabled") !== "true"
+        ) {
+            return botao;
+        }
+    }
+
+    return Array.from(document.querySelectorAll("button"))
+        .filter(isVisivel)
+        .filter((botao) => !botao.disabled && botao.getAttribute("aria-disabled") !== "true")
+        .find((botao) => normalizar(botao.textContent) === "PROXIMO") || null;
 }
 
 function campoChavesAcessoAberto() {
@@ -822,6 +907,18 @@ function encontrarBotaoBuscarChaves() {
 }
 
 async function clicarProximoDocumentosCarga(pendente) {
+    const grupos = obterGruposCte(pendente);
+    const gruposProcessados = obterIdsGruposCteProcessados(pendente);
+
+    if (grupos.length > 1 && gruposProcessados.size < grupos.length) {
+        console.warn("Nem todos os grupos de produtores foram carregados antes de clicar em Proximo.", {
+            totalGrupos: grupos.length,
+            gruposProcessados: Array.from(gruposProcessados),
+            grupoAtual: obterGrupoCteAtual(pendente)?.produtor || ""
+        });
+        return false;
+    }
+
     const modalCarregado = await aguardarTextoNaTela("INFORME OS DOCUMENTOS DA CARGA", TIMEOUT_RECEITA_MS);
 
     if (!modalCarregado) {
@@ -2821,17 +2918,21 @@ function obterProdutorNota(pendente) {
 }
 
 function obterGruposCte(pendente) {
-    const grupos = pendente.gruposCte ||
-        pendente.servico?.gruposCte ||
-        pendente.servico?.gruposProdutores ||
-        [];
-
-    return Array.isArray(grupos) ? grupos.filter((grupo) => {
+    const fontes = [
+        pendente.gruposCte,
+        pendente.servico?.gruposCte,
+        pendente.servico?.gruposProdutores
+    ];
+    const listasValidas = fontes
+        .filter(Array.isArray)
+        .map((grupos) => grupos.filter((grupo) => {
         const temChaves = Array.isArray(grupo.chavesAcesso) && grupo.chavesAcesso.length;
         const temXmls = Array.isArray(grupo.arquivosXml) && grupo.arquivosXml.some((arquivo) => arquivo?.conteudo);
 
         return temChaves || temXmls;
-    }) : [];
+        }));
+
+    return listasValidas.sort((a, b) => b.length - a.length)[0] || [];
 }
 
 function obterIndiceGrupoCteAtual(pendente) {
@@ -2865,6 +2966,36 @@ function temProximoGrupoCte(pendente) {
     const grupos = obterGruposCte(pendente);
 
     return obterIndiceGrupoCteAtual(pendente) + 1 < grupos.length;
+}
+
+function registrarGrupoCteProcessado(pendente) {
+    const grupo = obterGrupoCteAtual(pendente);
+    const ids = obterIdsGruposCteProcessados(pendente);
+
+    if (grupo) ids.add(obterIdGrupoCte(grupo, obterIndiceGrupoCteAtual(pendente)));
+
+    return {
+        ...pendente,
+        atualizadoEm: Date.now(),
+        gruposCteProcessados: Array.from(ids)
+    };
+}
+
+function obterIdsGruposCteProcessados(pendente) {
+    return new Set(
+        Array.isArray(pendente.gruposCteProcessados)
+            ? pendente.gruposCteProcessados.filter(Boolean)
+            : []
+    );
+}
+
+function obterIdGrupoCte(grupo, indice) {
+    return String(
+        grupo?.id ||
+        grupo?.produtorDocumento ||
+        grupo?.produtor ||
+        `grupo-${indice}`
+    );
 }
 
 function formatarChaveAcesso(chave) {
