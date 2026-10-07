@@ -41,10 +41,17 @@
 
     <main id="appView" class="shell">
         <section class="header">
-            <div>
+            <div class="header-brand">
+                <button id="btnMenu" class="ghost menu-toggle" type="button" aria-label="Abrir menu" aria-controls="menuLateral" aria-expanded="false">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                        <path d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+                <div>
                 <p class="eyebrow">AUTOMAÇÃO REPOM E SIMPLES CTE</p>
                 <h1>LEVO AUTO</h1>
                 <p id="usuarioSessao" class="session-info"></p>
+                </div>
             </div>
             <div class="header-actions">
                 <button id="btnSair" class="ghost" type="button">Sair</button>
@@ -155,6 +162,18 @@
         </div>
     </main>
 
+    <dialog id="menuLateral" class="menu-drawer" aria-labelledby="menuTitulo">
+        <div class="menu-drawer-header">
+            <h2 id="menuTitulo">Menu</h2>
+            <button id="btnFecharMenu" class="ghost menu-toggle" type="button" aria-label="Fechar menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                    <path d="m6 6 12 12M18 6 6 18"></path>
+                </svg>
+            </button>
+        </div>
+    </dialog>
+
+    <script type="module" src="menu-lateral.js"></script>
     <script type="module" src="app.js"></script>
 </body>
 </html>
