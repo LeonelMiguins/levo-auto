@@ -1,4 +1,8 @@
-const URL_PRODUTORES_COMPARTILHADOS = "file:///D:/PROJETOS/pedagio-auto/dados-compartilhados/produtores-km.json";
+const produtores = "produtores-km.json";
+
+// SETAR AQuI O CAMINHO:
+const URL_PRODUTORES_COMPARTILHADOS = "file:///F:/PROJETOS/levo-auto/dados-compartilhados/" + produtores;
+
 let alertaBaseCompartilhadaExibido = false;
 
 export async function carregarJson(caminho) {

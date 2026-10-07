@@ -1,5 +1,9 @@
 let produtores = [];
-const URL_PRODUTORES_COMPARTILHADOS = 'file:///D:/PROJETOS/pedagio-auto/dados-compartilhados/produtores-km.json';
+
+const produtores_path = "produtores-km.json";
+
+// SETAR AQuI O CAMINHO:
+const URL_PRODUTORES_COMPARTILHADOS = "file:///F:/PROJETOS/levo-auto/dados-compartilhados/" + produtores_path;
 
 fetch(URL_PRODUTORES_COMPARTILHADOS)
   .then(response => {

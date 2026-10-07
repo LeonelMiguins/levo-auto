@@ -8,3 +8,6 @@ node_modules/
 NFs de BASE/
 .DS_Store
 Thumbs.db
+dados-compartilhados/produtores-km.json.*.bak
+dados-compartilhados/~$*
+dados-compartilhados/__pycache__/
