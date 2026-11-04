@@ -606,6 +606,7 @@ function renderizarLogsProcesso(dados = {}) {
     const semPedagio = Boolean(servico?.semPedagio || cte?.semPedagio);
     const cteEtapa = cte?.etapa || "";
     const produtoresErro = Boolean(cte?.erroProdutores || cte?.erroTomador);
+    const mensagemErroProdutores = cte?.erroTomador || "Tomador vazio ou DIVERSOS";
     const freteErro = Boolean(cte?.erroFrete || cte?.erroKm);
     const produtoresOk =
         !produtoresErro &&
@@ -632,7 +633,7 @@ function renderizarLogsProcesso(dados = {}) {
             status: cte ? "ok" : "pending"
         },
         {
-            texto: produtoresErro ? "Produtores com erro: Tomador vazio ou DIVERSOS" : "Produtores carregados sem erro",
+            texto: produtoresErro ? `Produtores com erro: ${mensagemErroProdutores}` : "Produtores carregados sem erro",
             status: produtoresErro ? "error" : produtoresOk ? "ok" : "pending"
         },
         {

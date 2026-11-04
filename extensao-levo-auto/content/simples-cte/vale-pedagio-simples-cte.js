@@ -28,7 +28,7 @@ export function escutarValePedagioSimplesCte() {
 }
 
 async function observarModalValePedagio() {
-    const modal = encontrarModalValePedagio();
+    const modal = encontrarModalDadosViagem();
 
     document.getElementById("levo-auto-vale-pedagio-flutuante")?.remove();
 
@@ -42,22 +42,23 @@ async function observarModalValePedagio() {
 
     if (inserirBotaoAutoPreencher(modal)) {
         modaisPreparados.add(modal);
-        console.log("Botao Auto-preencher Vale-Pedagio inserido dentro do modal do Simples CTE.");
+        console.log("Botao Auto-preencher Vale-Pedagio inserido em Informe os dados da viagem.");
     }
 }
 
-function inserirBotaoAutoPreencher(modal) {
-    const acoes = encontrarAreaAcoesValePedagio(modal);
+function inserirBotaoAutoPreencher(modalViagem) {
+    const botaoInformarVale = encontrarBotaoInformarValePedagio(modalViagem);
 
-    if (!acoes || modal.querySelector("[data-levo-auto-vale-pedagio]")) return false;
+    if (!botaoInformarVale || modalViagem.querySelector("[data-levo-auto-vale-pedagio]")) return false;
 
     const botao = criarBotaoAutoPreencher();
+    botao.style.marginLeft = "8px";
 
     botao.addEventListener("click", async () => {
-        await executarPreenchimentoValePedagio(modal, botao);
+        await executarPreenchimentoValePedagio(null, botao, modalViagem);
     });
 
-    acoes.prepend(botao);
+    botaoInformarVale.insertAdjacentElement("afterend", botao);
 
     return true;
 }
@@ -83,8 +84,28 @@ function criarBotaoAutoPreencher() {
     return botao;
 }
 
-async function executarPreenchimentoValePedagio(modal, botao) {
+async function executarPreenchimentoValePedagio(modal, botao, modalViagem = null) {
     try {
+        modal = modal || encontrarModalValePedagio();
+
+        if (!modal && modalViagem) {
+            atualizarBotaoProcessando(botao, "Abrindo vale...");
+            const botaoInformarVale = encontrarBotaoInformarValePedagio(modalViagem);
+
+            if (!botaoInformarVale) {
+                atualizarBotaoErro(botao, "Botao indisponivel");
+                return;
+            }
+
+            botaoInformarVale.click();
+            modal = await aguardarModalValePedagio(TIMEOUT_AUTOCOMPLETE_MS);
+        }
+
+        if (!modal) {
+            atualizarBotaoErro(botao, "Modal nao abriu");
+            return;
+        }
+
         atualizarBotaoProcessando(botao, "Lendo dados...");
 
         const dados = await obterDadosValePedagio();
@@ -520,6 +541,34 @@ function encontrarModalValePedagio() {
     return Array.from(document.querySelectorAll(".MuiDialog-paper, .MuiPaper-root, .MuiDialogContent-root, [role='dialog'], form"))
         .filter(isVisivel)
         .find((elemento) => normalizarBusca(elemento.textContent).includes("DADOS DO VALE PEDAGIO")) || null;
+}
+
+function encontrarModalDadosViagem() {
+    const titulo = Array.from(document.querySelectorAll("h1, h2, h3, h4, span, div, p"))
+        .filter(isVisivel)
+        .filter((elemento) => normalizarBusca(elemento.textContent).includes("INFORME OS DADOS DA VIAGEM"))
+        .sort((a, b) => textoLimpo(a.textContent).length - textoLimpo(b.textContent).length)[0];
+
+    const modal = encontrarContainerModal(titulo);
+    return modal && isVisivel(modal) ? modal : null;
+}
+
+function encontrarBotaoInformarValePedagio(modalViagem) {
+    return Array.from(modalViagem?.querySelectorAll("button") || [])
+        .filter(isVisivel)
+        .find((botao) => normalizarBusca(botao.textContent) === "INFORMAR VALE PEDAGIO") || null;
+}
+
+async function aguardarModalValePedagio(timeout) {
+    const inicio = Date.now();
+
+    while (Date.now() - inicio < timeout) {
+        const modal = encontrarModalValePedagio();
+        if (modal) return modal;
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
 }
 
 function encontrarModalPorCamposGlobais() {

@@ -8,8 +8,12 @@
 
     if (location.hostname.includes("app.simplescte.com.br")) {
         const { escutarValePedagioSimplesCte } = await import(chrome.runtime.getURL("content/simples-cte/vale-pedagio-simples-cte.js"));
-        const { selecionarEmpresaSimplesCte } = await import(chrome.runtime.getURL("content/simples-cte/empresa-simples-cte.js"));
+        const {
+            instalarProtecaoEmissaoDestinatario,
+            selecionarEmpresaSimplesCte
+        } = await import(chrome.runtime.getURL("content/simples-cte/empresa-simples-cte.js"));
 
+        instalarProtecaoEmissaoDestinatario();
         escutarValePedagioSimplesCte();
 
         try {

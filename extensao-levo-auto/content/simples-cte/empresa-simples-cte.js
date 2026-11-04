@@ -11,12 +11,36 @@ const PAUSA_POS_CLIQUE_MS = 450;
 const TEMPO_MINIMO_BUSCA_GRUPO_MS = 3500;
 const TEMPO_VALIDACAO_TOMADOR_MS = 7000;
 
+export function instalarProtecaoEmissaoDestinatario() {
+    if (window.__levoAutoProtecaoDestinatarioInstalada) return;
+
+    window.__levoAutoProtecaoDestinatarioInstalada = true;
+    document.addEventListener("click", (event) => {
+        const botao = event.target?.closest?.("button, [role='button'], .MuiButtonBase-root");
+
+        if (!botao || !normalizar(botao.textContent).includes("SALVAR E EMITIR")) return;
+        if (destinatarioValido()) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        console.error("Emissao do CTe bloqueada: o campo Destinatario esta vazio ou como DIVERSOS.", {
+            destinatario: obterTextoCampo(encontrarCampoDestinatario())
+        });
+    }, true);
+}
+
 export async function selecionarEmpresaSimplesCte() {
     if (!location.hostname.includes("app.simplescte.com.br")) return false;
 
     const pendente = await obterPendente();
 
-    if (!pendente) return false;
+    if (!pendente) {
+        delete window.__levoAutoNomesDestinatario;
+        return false;
+    }
+
+    window.__levoAutoNomesDestinatario = obterNomesProdutoresXml(pendente);
 
     if (pendente.etapa === "empresa_selecionada") {
         return clicarNovoCte(pendente);
@@ -582,7 +606,7 @@ async function aguardarBuscaChavesDoGrupo(pendente, textoAntesBusca) {
     while (Date.now() - inicio < TIMEOUT_RECEITA_MS) {
         const tempoDecorrido = Date.now() - inicio;
         const textoAtual = normalizar(document.body?.innerText || "");
-        const modalDocumentosDisponivel = textoAtual.includes("INFORME OS DOCUMENTOS DA CARGA");
+        const modalDocumentosDisponivel = modalDadosCargaEstaNaTela(textoAtual);
         const carregando = existemIndicadoresCarregamento();
         const formularioChavesAberto = campoChavesAcessoAberto();
         const houveMudancaTela = textoAtual !== textoAntes;
@@ -653,6 +677,29 @@ function obterChavesEsperadasGrupo(grupo) {
 }
 
 function encontrarBotaoProximoDocumentosCarga() {
+    const modalEstaVisivel = (texto) => {
+        const normalizado = normalizar(texto);
+        return normalizado.includes("INFORME OS DOCUMENTOS DA CARGA") ||
+            normalizado.includes("INFORME OS DADOS DA CARGA");
+    };
+    const modais = Array.from(document.querySelectorAll(
+        "[role='dialog'], [aria-modal='true'], .MuiDialog-root, #modal-root"
+    ))
+        .filter(isVisivel)
+        .filter((modal) => modalEstaVisivel(modal.textContent))
+        .sort((a, b) => a.querySelectorAll("button, [role='button']").length - b.querySelectorAll("button, [role='button']").length);
+    const botoesDoModal = modais.flatMap((modal) =>
+        Array.from(modal.querySelectorAll("button, [role='button'], .MuiButtonBase-root"))
+    );
+    const botaoPorTexto = botoesDoModal.find((botao) =>
+        isVisivel(botao) &&
+        !botao.disabled &&
+        botao.getAttribute("aria-disabled") !== "true" &&
+        normalizar(botao.textContent) === "PROXIMO"
+    );
+
+    if (botaoPorTexto) return botaoPorTexto;
+
     const seletores = [
         "[data-testid='/cte--modal-Informe os documentos da carga--button-proximo']",
         "button#cte-wizard-submit-button"
@@ -671,10 +718,21 @@ function encontrarBotaoProximoDocumentosCarga() {
         }
     }
 
-    return Array.from(document.querySelectorAll("button"))
+    const botoes = Array.from(document.querySelectorAll("button, [role='button'], .MuiButtonBase-root"))
         .filter(isVisivel)
         .filter((botao) => !botao.disabled && botao.getAttribute("aria-disabled") !== "true")
-        .find((botao) => normalizar(botao.textContent) === "PROXIMO") || null;
+        .filter((botao) => normalizar(botao.textContent) === "PROXIMO");
+
+    return botoes.find((botao) => {
+        const modal = botao.closest("[role='dialog'], [aria-modal='true'], .MuiDialog-root, #modal-root");
+        return Boolean(modal && modalEstaVisivel(modal.textContent));
+    }) || botoes[0] || null;
+}
+
+function modalDadosCargaEstaNaTela(texto = document.body?.innerText || "") {
+    const normalizado = normalizar(texto);
+    return normalizado.includes("INFORME OS DOCUMENTOS DA CARGA") ||
+        normalizado.includes("INFORME OS DADOS DA CARGA");
 }
 
 function campoChavesAcessoAberto() {
@@ -919,17 +977,26 @@ async function clicarProximoDocumentosCarga(pendente) {
         return false;
     }
 
-    const modalCarregado = await aguardarTextoNaTela("INFORME OS DOCUMENTOS DA CARGA", TIMEOUT_RECEITA_MS);
+    const inicioEsperaModal = Date.now();
+    let modalCarregado = modalDadosCargaEstaNaTela();
+
+    while (!modalCarregado && Date.now() - inicioEsperaModal < TIMEOUT_RECEITA_MS) {
+        await sleep(500);
+        modalCarregado = modalDadosCargaEstaNaTela();
+    }
 
     if (!modalCarregado) {
         console.warn("Modal Informe os documentos da carga nao esta disponivel.", pendente);
         return false;
     }
 
-    const botao =
-        await aguardarElementoPorSeletor("[data-testid='/cte--modal-Informe os documentos da carga--button-proximo']", TIMEOUT_CTE_MS) ||
-        await aguardarElementoPorSeletor("#cte-wizard-submit-button", TIMEOUT_CTE_MS) ||
-        await aguardarBotaoPorTextos(["PROXIMO"], TIMEOUT_CTE_MS);
+    const inicioBuscaBotao = Date.now();
+    let botao = encontrarBotaoProximoDocumentosCarga();
+
+    while (!botao && Date.now() - inicioBuscaBotao < TIMEOUT_CTE_MS) {
+        await sleep(INTERVALO_BUSCA_MS);
+        botao = encontrarBotaoProximoDocumentosCarga();
+    }
 
     if (!botao) {
         console.warn("Botao Proximo do modal Informe os documentos da carga nao encontrado.", {
@@ -973,7 +1040,11 @@ async function confirmarDadosCteCarregados(pendente) {
         return false;
     }
 
+    if (!await validarDestinatarioDoXml(pendente)) return false;
+
     const tomadorValido = await validarTomadorCarregadoPeloXml(pendente);
+
+    if (tomadorValido === "calculadora_iniciada") return true;
 
     if (!tomadorValido) return false;
 
@@ -1014,6 +1085,10 @@ async function validarTomadorCarregadoPeloXml(pendente) {
     const validacao = await aguardarTomadorCarregadoValido(TEMPO_VALIDACAO_TOMADOR_MS);
 
     if (!validacao.valido) {
+        const produtorSelecionado = await preencherProdutorTomador(pendente);
+
+        if (produtorSelecionado) return "calculadora_iniciada";
+
         await registrarErroTomador(pendente, "Tomador vazio ou DIVERSOS", validacao.valor);
 
         console.warn("Tomador vazio ou DIVERSOS apos carregar XML. A automacao foi interrompida antes da calculadora.", {
@@ -1025,6 +1100,145 @@ async function validarTomadorCarregadoPeloXml(pendente) {
     }
 
     return true;
+}
+
+async function validarDestinatarioDoXml(pendente) {
+    const campo = await aguardarCampoDestinatario(TIMEOUT_AUTOCOMPLETE_MS);
+    const nomesXml = obterNomesProdutoresXml(pendente);
+
+    if (!campo || !nomesXml.length) {
+        await registrarErroTomador(
+            pendente,
+            campo ? "Nome do produtor nao encontrado nos XMLs" : "Campo Destinatario nao encontrado",
+            obterTextoCampo(campo)
+        );
+        console.error("CTe bloqueado: nao foi possivel validar o nome do Destinatario com os XMLs.", {
+            quantidadeProdutoresXml: nomesXml.length,
+            campoEncontrado: Boolean(campo),
+            destinatarioPreenchido: Boolean(obterTextoCampo(campo))
+        });
+        return false;
+    }
+
+    const valorCampo = obterTextoCampo(campo);
+    if (nomesXml.some((nome) => destinatarioCorrespondeNome(valorCampo, nome))) return true;
+
+    const selecionado = await selecionarDestinatarioPorNome(campo, nomesXml);
+
+    if (selecionado) return true;
+
+    await registrarErroTomador(
+        pendente,
+        "Destinatario vazio, DIVERSOS ou sem nome identico ao produtor dos XMLs",
+        obterTextoCampo(encontrarCampoDestinatario())
+    );
+    console.error("CTe bloqueado: nenhum cadastro possui nome completo identico ao produtor dos XMLs.", {
+        quantidadeProdutoresXml: nomesXml.length,
+        destinatarioPreenchido: Boolean(obterTextoCampo(encontrarCampoDestinatario()))
+    });
+    return false;
+}
+
+function obterNomesProdutoresXml(pendente) {
+    const nomes = [];
+    const nfs = Array.isArray(pendente.servico?.nfs) ? pendente.servico.nfs : [];
+
+    nfs.forEach((nf) => nomes.push(nf?.produtor));
+    obterGruposCte(pendente).forEach((grupo) => nomes.push(grupo?.produtor));
+
+    const vistos = new Set();
+    return nomes
+        .map(textoLimpo)
+        .filter((nome) => nome && nome !== "-")
+        .filter((nome) => {
+            const chave = normalizar(nome);
+            if (vistos.has(chave)) return false;
+            vistos.add(chave);
+            return true;
+        });
+}
+
+async function aguardarCampoDestinatario(timeout) {
+    const inicio = Date.now();
+
+    while (Date.now() - inicio < timeout) {
+        const campo = encontrarCampoDestinatario();
+        if (campo) return campo;
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+async function selecionarDestinatarioPorNome(campo, nomes) {
+    const controle = campo.matches?.("input") ? campo : campo.querySelector?.("input");
+
+    if (!controle || controle.readOnly || controle.disabled) {
+        await clicarElemento(campo);
+        await sleep(PAUSA_POS_CLIQUE_MS);
+    }
+
+    for (const nome of nomes) {
+        if (controle && !controle.readOnly && !controle.disabled) {
+            await preencherInputBusca(controle, nome);
+        }
+
+        const opcao = await aguardarOpcaoPorNome(nome, 2000);
+        if (!opcao) continue;
+
+        await clicarElemento(resolverElementoClicavel(opcao));
+        if (await aguardarDestinatarioComNome(nome, TIMEOUT_CTE_MS)) return true;
+    }
+
+    return false;
+}
+
+async function aguardarOpcaoPorNome(nome, timeout) {
+    const inicio = Date.now();
+
+    while (Date.now() - inicio < timeout) {
+        const opcoes = Array.from(document.querySelectorAll([
+            "[role='option']",
+            "[role='listbox'] *",
+            "li",
+            ".MuiAutocomplete-option",
+            ".MuiMenuItem-root",
+            ".MuiPopper-root *",
+            ".MuiPaper-root *",
+            "[class*='option']",
+            "[class*='Option']"
+        ].join(",")))
+            .filter(isVisivel)
+            .filter((opcao) => destinatarioCorrespondeNome(opcao.textContent, nome))
+            .sort((a, b) => textoLimpo(a.textContent).length - textoLimpo(b.textContent).length);
+
+        if (opcoes.length) return opcoes[0];
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+async function aguardarDestinatarioComNome(nome, timeout) {
+    const inicio = Date.now();
+
+    while (Date.now() - inicio < timeout) {
+        const campo = encontrarCampoDestinatario();
+        if (campo && destinatarioCorrespondeNome(obterTextoCampo(campo), nome)) return true;
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return false;
+}
+
+function destinatarioCorrespondeNome(valor, nome) {
+    const valorNormalizado = normalizar(valor);
+    const nomeNormalizado = normalizar(nome);
+
+    return Boolean(nomeNormalizado) && (
+        valorNormalizado === nomeNormalizado ||
+        valorNormalizado.startsWith(`${nomeNormalizado} -`)
+    );
 }
 
 async function aguardarTomadorCarregadoValido(timeout) {
@@ -1315,6 +1529,14 @@ async function preencherCalculadoraFrete(pendente) {
 
 async function finalizarCteSeAutoconfirmar(pendente) {
     if (!await deveAutoconfirmarCte(pendente)) return false;
+
+    if (!destinatarioValido()) {
+        console.error("Autoconfirmacao bloqueada: o campo Destinatario esta vazio ou como DIVERSOS.", {
+            destinatario: obterTextoCampo(encontrarCampoDestinatario()),
+            pendente
+        });
+        return false;
+    }
 
     const botao = await aguardarBotaoSalvarEmitirCte(TIMEOUT_AUTOCOMPLETE_MS);
 
@@ -2453,6 +2675,50 @@ function encontrarCampoTomadorPorRotulo() {
     const input = bloco?.querySelector("input[type='text'], input:not([type]), [role='combobox']");
 
     return input && isVisivel(input) ? input : null;
+}
+
+function encontrarCampoDestinatario() {
+    const rotulos = Array.from(document.querySelectorAll(
+        "label, .MuiFormLabel-root, .MuiTypography-root, span"
+    ))
+        .filter(isVisivel)
+        .filter((elemento) => {
+            const texto = normalizar(elemento.textContent || "");
+            return texto.includes("PARA QUEM VAI SER ENVIADA A MERCADORIA") ||
+                texto.includes("DESTINATARIO");
+        })
+        .sort((a, b) => textoLimpo(a.textContent).length - textoLimpo(b.textContent).length);
+    const rotulo = rotulos[0];
+
+    if (!rotulo) return null;
+
+    const idCampo = rotulo.getAttribute("for");
+    const campoPorId = idCampo ? document.getElementById(idCampo) : null;
+
+    if (campoPorId && isVisivel(campoPorId)) return campoPorId;
+
+    let bloco = rotulo;
+
+    for (let nivel = 0; nivel < 5 && bloco; nivel += 1, bloco = bloco.parentElement) {
+        const campo = bloco.querySelector?.(
+            "input:not([type='hidden']), [role='combobox'], [aria-haspopup='listbox'], .MuiSelect-select"
+        );
+
+        if (campo && isVisivel(campo)) return campo;
+    }
+
+    return null;
+}
+
+function destinatarioValido() {
+    const campo = encontrarCampoDestinatario();
+    const valor = obterTextoCampo(campo);
+    const nomesEsperados = window.__levoAutoNomesDestinatario || [];
+
+    return Boolean(campo && !tomadorInvalido(normalizar(valor))) &&
+        (!nomesEsperados.length || nomesEsperados.some((nome) =>
+            destinatarioCorrespondeNome(valor, nome)
+        ));
 }
 
 function campoTemTextoTomador(campo) {
