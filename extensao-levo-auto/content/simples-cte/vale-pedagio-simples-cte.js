@@ -10,6 +10,7 @@ const RESPONSAVEIS_VALE_PEDAGIO = {
 };
 
 const modaisPreparados = new WeakSet();
+const modaisValidando = new WeakSet();
 
 export function escutarValePedagioSimplesCte() {
     if (window.__levoAutoValePedagioListener) return;
@@ -32,18 +33,119 @@ async function observarModalValePedagio() {
 
     document.getElementById("levo-auto-vale-pedagio-flutuante")?.remove();
 
-    if (!modal || modaisPreparados.has(modal)) return;
+    if (!modal || modaisPreparados.has(modal) || modaisValidando.has(modal)) return;
     if (modal.querySelector("[data-levo-auto-vale-pedagio]")) {
         modaisPreparados.add(modal);
         return;
     }
 
-    await sleep(250);
+    modaisValidando.add(modal);
 
-    if (inserirBotaoAutoPreencher(modal)) {
-        modaisPreparados.add(modal);
-        console.log("Botao Auto-preencher Vale-Pedagio inserido em Informe os dados da viagem.");
+    try {
+        await sleep(250);
+
+        const viagemOk = await validarDadosViagemAntesDoBotao(modal);
+
+        if (!viagemOk) return;
+
+        if (inserirBotaoAutoPreencher(modal)) {
+            modaisPreparados.add(modal);
+            console.log("Botao Auto-preencher Vale-Pedagio inserido apos validar Operacao de alto desempenho e placa da viagem.");
+        }
+    } finally {
+        modaisValidando.delete(modal);
     }
+}
+
+async function validarDadosViagemAntesDoBotao(modal) {
+    const checkboxOk = await garantirOperacaoAltoDesempenhoMarcada(modal);
+    const placaOk = await garantirPlacaDaViagem(modal);
+
+    if (!checkboxOk || !placaOk) {
+        console.warn("Auto-preencher Vale-Pedagio aguardando dados validos da viagem.", {
+            operacaoAltoDesempenhoOk: checkboxOk,
+            placaViagemOk: placaOk
+        });
+        return false;
+    }
+
+    return true;
+}
+
+async function garantirOperacaoAltoDesempenhoMarcada(modal) {
+    const rotulo = Array.from(modal.querySelectorAll("label"))
+        .find((elemento) => normalizarBusca(elemento.textContent).includes("OPERACAO DE ALTO DESEMPENHO"));
+    const checkbox = rotulo?.querySelector("input[type='checkbox']") ||
+        Array.from(modal.querySelectorAll("input[type='checkbox']"))
+            .find((input) => normalizarBusca(input.closest("label")?.textContent).includes("OPERACAO DE ALTO DESEMPENHO"));
+
+    if (!checkbox) return false;
+    if (!checkbox.checked) {
+        (rotulo || checkbox).click();
+        await sleep(200);
+    }
+
+    return checkbox.checked;
+}
+
+async function garantirPlacaDaViagem(modal) {
+    const storage = await chrome.storage.local.get([
+        STORAGE_KEYS.servicoAtual,
+        STORAGE_KEYS.simplesCtePendente
+    ]);
+    const servico = storage[STORAGE_KEYS.servicoAtual] || storage[STORAGE_KEYS.simplesCtePendente]?.servico || {};
+    const pendente = storage[STORAGE_KEYS.simplesCtePendente] || {};
+    const placaEsperada = normalizarPlaca(
+        servico.codigo || servico.placa || servico.caminhao?.placa ||
+        pendente.placa || pendente.caminhao?.placa || pendente.servico?.caminhao?.placa
+    );
+    const campoPlaca = encontrarCampoPlacaViagem(modal);
+
+    if (!placaEsperada || !campoPlaca) return false;
+    if (normalizarPlaca(campoPlaca.value || campoPlaca.getAttribute("value") || "").includes(placaEsperada)) return true;
+
+    await preencherInputTextoDigitando(campoPlaca, placaEsperada);
+    const opcao = await aguardarOpcaoPlaca(placaEsperada, TIMEOUT_AUTOCOMPLETE_MS);
+
+    if (!opcao) {
+        console.warn("Placa da viagem salva nao encontrada no autocomplete do Simples CTE.", {
+            placaEsperada,
+            valorAtual: campoPlaca.value
+        });
+        return false;
+    }
+
+    await clicarElemento(opcao);
+    await sleep(400);
+
+    return normalizarPlaca(campoPlaca.value || campoPlaca.getAttribute("value") || "").includes(placaEsperada);
+}
+
+function encontrarCampoPlacaViagem(modal) {
+    const porPlaceholder = Array.from(modal.querySelectorAll("input[role='combobox']"))
+        .find((input) => normalizarBusca(input.placeholder).includes("PRESSIONE EM") && normalizarBusca(input.placeholder).includes("CADASTRAR"));
+
+    if (porPlaceholder) return porPlaceholder;
+
+    const rotulo = Array.from(modal.querySelectorAll("span, label"))
+        .find((elemento) => normalizarBusca(elemento.textContent) === "VEICULO TRACAO");
+
+    return rotulo?.parentElement?.parentElement?.querySelector("input[role='combobox']") || null;
+}
+
+async function aguardarOpcaoPlaca(placa, timeout) {
+    const inicio = Date.now();
+
+    while (Date.now() - inicio < timeout) {
+        const opcao = Array.from(document.querySelectorAll("[role='option'], .MuiAutocomplete-option"))
+            .filter(isVisivel)
+            .find((elemento) => normalizarPlaca(elemento.textContent).includes(placa));
+
+        if (opcao) return encontrarElementoClicavelOpcao(opcao);
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
 }
 
 function inserirBotaoAutoPreencher(modalViagem) {
