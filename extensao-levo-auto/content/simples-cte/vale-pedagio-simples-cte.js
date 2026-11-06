@@ -221,7 +221,7 @@ async function executarPreenchimentoValePedagio(modal, botao, modalViagem = null
         const ok = await preencherValePedagio(modal, dados, botao);
 
         if (ok) {
-            atualizarBotaoSucesso(botao, "Preenchido");
+            atualizarBotaoSucesso(botao, "Adicionado");
             return;
         }
 
@@ -293,17 +293,33 @@ async function preencherValePedagio(modal, dados, botao) {
     atualizarBotaoProcessando(botao, "Validando...");
     const fornecedorFinalOk = await garantirFornecedorValePreenchido(campoFornecedor);
 
-    if (!fornecedorOk || !responsavelOk || !eixosOk || !fornecedorFinalOk) {
+    const comprovanteOk = normalizarDigitos(campoComprovante.value) === dados.numeroMeioPagamento;
+    const valorOk = converterNumeroBr(campoValor.value) === converterNumeroBr(dados.valorFormatado);
+
+    if (!fornecedorOk || !responsavelOk || !eixosOk || !fornecedorFinalOk || !comprovanteOk || !valorOk) {
         console.warn("Nem todos os campos de autocomplete do Vale-Pedagio foram confirmados.", {
             fornecedorOk,
             fornecedorFinalOk,
             responsavelOk,
             eixosOk,
+            comprovanteOk,
+            valorOk,
             campos: listarCamposModal(modal),
             dados
         });
         return false;
     }
+
+    atualizarBotaoProcessando(botao, "Adicionando...");
+    const botaoAdicionar = encontrarBotaoAdicionarVale(modal);
+
+    if (!botaoAdicionar || botaoAdicionar.disabled) {
+        console.warn("Botao Adicionar do modal Vale-Pedagio nao encontrado ou indisponivel.");
+        return false;
+    }
+
+    botaoAdicionar.click();
+    await sleep(350);
 
     console.log("Dados do Vale-Pedagio preenchidos automaticamente no Simples CTE.", {
         fornecedor: dados.fornecedor,
@@ -314,6 +330,16 @@ async function preencherValePedagio(modal, dados, botao) {
     });
 
     return true;
+}
+
+function encontrarBotaoAdicionarVale(modal) {
+    return Array.from(modal.querySelectorAll("button[type='submit']"))
+        .filter(isVisivel)
+        .find((botao) => normalizarBusca(botao.textContent) === "ADICIONAR") || null;
+}
+
+function normalizarDigitos(valor) {
+    return String(valor || "").replace(/\D/g, "");
 }
 
 function atualizarBotaoProcessando(botao, texto) {
