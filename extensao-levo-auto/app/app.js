@@ -1,0 +1,826 @@
+import { formatarHora, formatarKm, formatarMoeda, formatarNumero, valorExiste } from "../shared/formatters.js";
+import { STORAGE_KEYS } from "../shared/constants.js";
+import { normalizar } from "../shared/text.js";
+import { carregarJson, carregarUsuarios, normalizarUsuarios } from "./services/data-service.js";
+import { abrirOuReutilizarAbaSimplesCte } from "./services/cte-launcher.js";
+import { buscarProdutorKm as buscarProdutorKmNaBase } from "./services/produtores-service.js";
+import { abrirOuReutilizarAbaRepom } from "./services/repom-launcher.js";
+import { criarSessao, limparSessao, obterSessaoValida, salvarSessao } from "./services/session-service.js";
+import { montarServico, montarServicoManual } from "./services/servico-service.js";
+import {
+    limparEtapasAutomacao,
+    limparServicoTemporario,
+    obterHistoricoPedagiosUsuario,
+    obterPedagioEmitido,
+    obterServicoAtual,
+    salvarServicoAtual,
+    salvarServicoRepomPendente,
+    salvarSimplesCtePendente
+} from "./services/storage-service.js";
+import { extrairNfe } from "./services/xml-service.js";
+
+const estado = {
+    nfs: [],
+    caminhoes: {},
+    produtoresKm: [],
+    usuarios: [],
+    sessao: null,
+    grupoCteSelecionadoId: ""
+};
+
+const $ = (seletor) => document.querySelector(seletor);
+
+const campos = {
+    placa: $("#placa"),
+    placaAviso: $("#placaAviso"),
+    cidade: $("#cidade"),
+    nota: $("#nota"),
+    quantidade: $("#quantidade"),
+    autoConfirmar: $("#autoConfirmar"),
+    autoConfirmarCte: $("#autoConfirmarCte"),
+    autoIniciarCte: $("#autoIniciarCte"),
+    semPedagio: $("#semPedagio")
+};
+
+const login = {
+    form: $("#loginForm"),
+    nome: $("#loginNome"),
+    senha: $("#loginSenha"),
+    status: $("#loginStatus"),
+    usuarioSessao: $("#usuarioSessao")
+};
+
+const resumo = {
+    produtor: $("#produtor"),
+    emitente: $("#emitente"),
+    municipio: $("#municipio"),
+    kmPagamento: $("#kmPagamento"),
+    notas: $("#notas"),
+    peso: $("#peso"),
+    valor: $("#valor")
+};
+
+const repomEmitido = {
+    numeroPedagio: $("#repomNumeroPedagio"),
+    meioPagamento: $("#repomMeioPagamento"),
+    valor: $("#repomValor"),
+    empresa: $("#repomEmpresa"),
+    historico: $("#historicoPedagios")
+};
+
+const processo = {
+    logs: $("#processLogs")
+};
+
+iniciar();
+
+async function iniciar() {
+    const [caminhoes, produtoresKm, usuarios] = await Promise.all([
+        carregarJson("data/caminhoes.json"),
+        carregarJson("data/produtores-km.json"),
+        carregarUsuarios()
+    ]);
+
+    estado.caminhoes = caminhoes;
+    estado.produtoresKm = produtoresKm.produtores || [];
+    estado.usuarios = normalizarUsuarios(usuarios);
+
+    login.form.addEventListener("submit", entrar);
+    $("#btnSair").addEventListener("click", sair);
+    $("#xmlInput").addEventListener("change", importarXmls);
+    campos.placa.addEventListener("input", validarPlacaNaTela);
+    campos.cidade.addEventListener("input", atualizarBotaoIniciar);
+    campos.nota.addEventListener("input", atualizarBotaoIniciar);
+    campos.quantidade.addEventListener("input", atualizarBotaoIniciar);
+    campos.autoConfirmarCte.addEventListener("change", salvarOpcoesAutomacao);
+    campos.autoIniciarCte.addEventListener("change", salvarOpcoesAutomacao);
+    campos.semPedagio.addEventListener("change", alternarSemPedagio);
+    $("#btnIniciar").addEventListener("click", iniciarProcesso);
+    $("#btnLimpar").addEventListener("click", limparTudo);
+    chrome.storage.onChanged.addListener(atualizarQuandoStorageMudar);
+
+    const sessao = await obterSessaoValida(estado.usuarios);
+
+    if (sessao) {
+        aplicarSessao(sessao);
+        await restaurarServicoTemporario();
+        aplicarPedagioEmitido(await obterPedagioEmitido());
+        await aplicarHistoricoUsuario();
+        await atualizarLogsProcesso();
+    } else {
+        bloquearAplicacao();
+    }
+}
+
+async function entrar(event) {
+    event.preventDefault();
+
+    const nome = login.nome.value.trim();
+    const senha = login.senha.value;
+
+    if (!estado.usuarios.length) {
+        setLoginStatus("Nenhum usuario cadastrado em data/users.json.", true);
+        return;
+    }
+
+    const usuario = estado.usuarios.find((item) =>
+        normalizar(item.nome) === normalizar(nome) &&
+        String(item.senha || "") === senha
+    );
+
+    if (!usuario) {
+        setLoginStatus("Usuario ou senha invalidos.", true);
+        return;
+    }
+
+    const sessao = criarSessao(usuario);
+
+    await salvarSessao(sessao);
+    aplicarSessao(sessao);
+    await restaurarServicoTemporario();
+    await aplicarHistoricoUsuario();
+}
+
+function aplicarSessao(sessao) {
+    estado.sessao = sessao;
+    document.body.classList.remove("bloqueado");
+    login.senha.value = "";
+    login.usuarioSessao.textContent =
+        `${sessao.nome} - sessao ate ${formatarHora(sessao.expiraEm)}`;
+    aplicarPermissoesAdministrador();
+}
+
+function bloquearAplicacao() {
+    estado.sessao = null;
+    aplicarPermissoesAdministrador();
+    document.body.classList.add("bloqueado");
+    login.usuarioSessao.textContent = "";
+    setLoginStatus("Entre para iniciar a automacao.", false);
+    aplicarHistorico([]);
+    renderizarLogsProcesso();
+}
+
+async function sair() {
+    await limparSessao();
+    bloquearAplicacao();
+}
+
+async function exigirSessao() {
+    const sessao = await obterSessaoValida(estado.usuarios);
+
+    if (sessao) {
+        aplicarSessao(sessao);
+        return sessao;
+    }
+
+    bloquearAplicacao();
+    setLoginStatus("Sessao expirada. Entre novamente.", true);
+    throw new Error("Sessao expirada");
+}
+
+async function restaurarServicoTemporario() {
+    const servico = await obterServicoAtual();
+
+    if (!servico) return;
+
+    aplicarServicoNaTela(servico);
+    aplicarPedagioEmitido(servico.pedagioEmitido || await obterPedagioEmitido());
+    setStatus("Servico temporario carregado.", "ok");
+}
+
+async function importarXmls(event) {
+    await exigirSessao();
+
+    const arquivos = Array.from(event.target.files || []);
+
+    if (!arquivos.length) return;
+
+    try {
+        const nfs = [];
+
+        for (const arquivo of arquivos) {
+            const xml = await arquivo.text();
+            nfs.push(extrairNfe(xml, arquivo.name));
+        }
+
+        validarPlacasDasNotas(nfs);
+
+        estado.nfs = nfs.sort((a, b) => Number(a.numero || 0) - Number(b.numero || 0));
+        const servico = montarServico(estado.nfs, criarContextoServico());
+
+        await limparEtapasAutomacao();
+        aplicarPedagioEmitido(null);
+        aplicarServicoNaTela(servico);
+        await salvarServicoAtual(servico);
+        await atualizarLogsProcesso();
+
+        const variosDestinos = (servico.destinoPedagio?.destinos || []).length > 1;
+        const mensagemKm = valorExiste(servico.kmPagamento)
+            ? ` Pedagio para ${servico.cidade}${variosDestinos ? " (cidade mais longe)" : ""}: ${formatarKm(servico.kmPagamento)}.`
+            : " Produtor nao encontrado na base de KM.";
+
+        setStatus(`${nfs.length} XML(s) importado(s) e salvos temporariamente.${mensagemKm}`, "ok");
+    } catch (error) {
+        console.error(error);
+        setStatus(error.message || "Nao foi possivel ler os XMLs.", "error");
+    } finally {
+        event.target.value = "";
+    }
+}
+
+function aplicarServicoNaTela(servico) {
+    campos.placa.value = servico.codigo || servico.caminhao?.placa || "";
+    campos.cidade.value = servico.cidade || "";
+    campos.nota.value = servico.nota || "";
+    campos.quantidade.value = servico.quantidade || 0;
+    campos.autoConfirmar.checked = Boolean(servico.autoConfirmar ?? servico.autoImprimir);
+    campos.autoConfirmarCte.checked = podeAutoconfirmarCte() && Boolean(servico.autoConfirmarCte);
+    campos.autoIniciarCte.checked = podeUsarRecursosAdministrador() && Boolean(servico.autoIniciarCte);
+    campos.semPedagio.checked = Boolean(servico.semPedagio);
+    atualizarOpcaoAutoconfirmarRepom();
+
+    estado.grupoCteSelecionadoId = obterGrupoSelecionado(servico)?.id || servico.grupoCteSelecionadoId || "";
+    renderizarProdutores(servico);
+    resumo.emitente.textContent = servico.resumo?.emitente || "-";
+    resumo.municipio.textContent = servico.resumo?.municipio || servico.cidade || "-";
+    resumo.kmPagamento.textContent = formatarKm(
+        servico.distanciaPagamento ??
+        servico.distanciaKm ??
+        servico.kmPagamento ??
+        servico.resumo?.distanciaPagamento ??
+        servico.resumo?.distanciaKm ??
+        servico.resumo?.kmPagamento
+    );
+    resumo.notas.textContent = servico.resumo?.notas?.join(", ") || servico.nota || "-";
+    resumo.peso.textContent = formatarNumero(servico.resumo?.pesoTotal, " kg");
+    resumo.valor.textContent = formatarMoeda(servico.resumo?.valorTotal);
+
+    validarPlacaNaTela();
+}
+
+async function fazerRepom() {
+    const sessao = await exigirSessao();
+    const servico = montarServicoManual(
+        await obterServicoAtual() || {},
+        obterValoresTela(),
+        criarContextoServico()
+    );
+
+    if (!servico.cidade || !servico.nota || !servico.quantidade) {
+        setStatus("Informe cidade, nota inicial e quantidade antes de fazer o Repom.", "error");
+        return;
+    }
+
+    if (servico.semPedagio) {
+        setStatus("Servico marcado como sem pedagio. O fluxo de CTE sera iniciado diretamente.", "error");
+        return;
+    }
+
+    if (!validarPlacaNaTela()) {
+        setStatus("Corrija a placa antes de fazer o Repom.", "error");
+        return;
+    }
+
+    await salvarServicoRepomPendente(servico, sessao);
+    aplicarPedagioEmitido(null);
+
+    const aba = await abrirOuReutilizarAbaRepom();
+    const acao = aba.reutilizada ? "reutilizada" : "aberta";
+
+    setStatus(`Servico enviado para o Repom. A aba do Repom foi ${acao}.`, "ok");
+    await atualizarLogsProcesso();
+}
+
+async function iniciarProcesso() {
+    if (campos.semPedagio.checked) {
+        await fazerCte();
+        return;
+    }
+
+    const pedagio = await obterPedagioEmitido();
+    const pedagioOk = Boolean(
+        pedagio?.numeroPedagio &&
+        pedagio?.numeroMeioPagamento &&
+        pedagio?.valor &&
+        pedagio?.empresa
+    );
+
+    if (pedagioOk) {
+        await fazerCte();
+        return;
+    }
+
+    await fazerRepom();
+}
+
+async function fazerCte() {
+    const sessao = await exigirSessao();
+
+    const pedagio = await obterPedagioEmitido();
+    const servicoBase = await obterServicoAtual();
+    const servicoAtualizado = montarServicoManual(
+        servicoBase || {},
+        obterValoresTela(),
+        criarContextoServico()
+    );
+    const servico = prepararServicoParaCte(servicoAtualizado);
+    const semPedagio = Boolean(servico?.semPedagio || campos.semPedagio.checked);
+
+    if (!semPedagio && (!pedagio?.numeroPedagio || !pedagio?.numeroMeioPagamento || !pedagio?.valor || !pedagio?.empresa)) {
+        aplicarPedagioEmitido(null);
+        setStatus("Consuma o pedagio no Repom antes de fazer o CTE.", "error");
+        return;
+    }
+
+    if (semPedagio && (!servico?.cidade || !servico?.nota || !servico?.quantidade)) {
+        setStatus("Carregue ou salve os dados da nota antes de fazer o CTE.", "error");
+        return;
+    }
+
+    if (!servico?.caminhao?.transportadora) {
+        setStatus("Transportadora do caminhao nao encontrada na base.", "error");
+        return;
+    }
+
+    await salvarServicoAtual(servico);
+    await salvarSimplesCtePendente(servico, semPedagio ? null : pedagio, sessao);
+
+    const aba = await abrirOuReutilizarAbaSimplesCte();
+    const acao = aba.reutilizada ? "reutilizada" : "aberta";
+
+    setStatus(`Simples CTE ${acao}. Buscando empresa: ${servico.caminhao.transportadora}.`, "ok");
+    await atualizarLogsProcesso();
+}
+
+async function limparTudo() {
+    await exigirSessao();
+
+    estado.nfs = [];
+    estado.grupoCteSelecionadoId = "";
+    await limparServicoTemporario();
+
+    Object.values(campos).forEach((campo) => {
+        if (campo.type === "checkbox") {
+            campo.checked = false;
+        } else if ("value" in campo) {
+            campo.value = "";
+        }
+    });
+    atualizarOpcaoAutoconfirmarRepom();
+
+    Object.values(resumo).forEach((item) => {
+        item.textContent = "-";
+    });
+
+    aplicarPedagioEmitido(null);
+    await atualizarLogsProcesso();
+    validarPlacaNaTela();
+    atualizarBotaoIniciar();
+    setStatus("Nenhum XML carregado.", "empty");
+}
+
+function obterValoresTela() {
+    return {
+        placa: campos.placa.value,
+        cidade: campos.cidade.value,
+        nota: campos.nota.value,
+        quantidade: campos.quantidade.value,
+        autoConfirmar: campos.autoConfirmar.checked,
+        autoConfirmarCte: podeAutoconfirmarCte() && campos.autoConfirmarCte.checked,
+        autoIniciarCte: podeUsarRecursosAdministrador() && campos.autoIniciarCte.checked,
+        semPedagio: campos.semPedagio.checked
+    };
+}
+
+function criarContextoServico() {
+    return {
+        autoConfirmar: campos.autoConfirmar.checked,
+        autoConfirmarCte: podeAutoconfirmarCte() && campos.autoConfirmarCte.checked,
+        autoIniciarCte: podeUsarRecursosAdministrador() && campos.autoIniciarCte.checked,
+        semPedagio: campos.semPedagio.checked,
+        buscarCaminhao,
+        buscarProdutorKm
+    };
+}
+
+function buscarCaminhao(valor) {
+    const busca = normalizarPlacaOuCodigo(valor);
+
+    if (!busca) return null;
+
+    return estado.caminhoes[busca] ||
+        estado.caminhoes[busca.slice(0, 3)] ||
+        Object.entries(estado.caminhoes)
+            .find(([codigo, caminhao]) =>
+                normalizarPlacaOuCodigo(codigo) === busca ||
+                normalizarPlacaOuCodigo(caminhao?.placa) === busca ||
+                (busca.length >= 3 && normalizarPlacaOuCodigo(caminhao?.placa).startsWith(busca))
+            )?.[1] ||
+        null;
+}
+
+function normalizarPlacaOuCodigo(valor) {
+    return String(valor || "")
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, "")
+        .trim();
+}
+
+function validarPlacasDasNotas(nfs) {
+    const placas = Array.from(new Set(
+        nfs
+            .map((nf) => String(nf.placa || "").toUpperCase().replace(/[^A-Z0-9]/g, ""))
+            .filter(Boolean)
+    ));
+
+    if (placas.length <= 1) return;
+
+    const detalhes = nfs
+        .map((nf) => {
+            const placa = String(nf.placa || "").toUpperCase().trim() || "sem placa";
+            const nota = nf.numero ? `NF ${nf.numero}` : nf.arquivo;
+
+            return `${nota}: ${placa}`;
+        })
+        .join(" | ");
+
+    throw new Error(`XMLs com placas diferentes. Selecione notas de apenas um caminhao. ${detalhes}`);
+}
+
+function validarPlacaNaTela() {
+    const placa = campos.placa.value.trim();
+    const encontrada = !placa || Boolean(buscarCaminhao(placa));
+    campos.placaAviso.hidden = encontrada;
+    campos.placa.classList.toggle("field-error", !encontrada);
+    atualizarBotaoIniciar();
+    return encontrada;
+}
+
+function atualizarBotaoIniciar() {
+    $("#btnIniciar").disabled =
+        !campos.cidade.value.trim() ||
+        !campos.nota.value.trim() ||
+        !Number(campos.quantidade.value || 0) ||
+        !validarPlacaSemAtualizarTela();
+}
+
+function validarPlacaSemAtualizarTela() {
+    const placa = campos.placa.value.trim();
+    return !placa || Boolean(buscarCaminhao(placa));
+}
+
+function buscarProdutorKm(nf) {
+    return buscarProdutorKmNaBase(estado.produtoresKm, nf);
+}
+
+function atualizarQuandoStorageMudar(changes, areaName) {
+    if (areaName !== "local") return;
+
+    if (changes[STORAGE_KEYS.repomPedagioEmitido]) {
+        aplicarPedagioEmitido(changes[STORAGE_KEYS.repomPedagioEmitido].newValue || null);
+    }
+
+    if (
+        changes[STORAGE_KEYS.servicoAtual] ||
+        changes[STORAGE_KEYS.repomPendente] ||
+        changes[STORAGE_KEYS.simplesCtePendente]
+    ) {
+        atualizarLogsProcesso();
+    }
+
+    if (changes[STORAGE_KEYS.historicoPedagios]) {
+        aplicarHistoricoUsuario();
+    }
+}
+
+function aplicarPedagioEmitido(pedagio) {
+    repomEmitido.numeroPedagio.textContent = pedagio?.numeroPedagio || "-";
+    repomEmitido.meioPagamento.textContent = pedagio?.numeroMeioPagamento || "-";
+    repomEmitido.valor.textContent = formatarValorRepom(pedagio?.valor);
+    repomEmitido.empresa.textContent = pedagio?.empresa || "-";
+    atualizarBotaoIniciar();
+    atualizarLogsProcesso();
+}
+
+async function alternarSemPedagio() {
+    atualizarOpcaoAutoconfirmarRepom();
+    await salvarOpcoesAutomacao();
+    aplicarPedagioEmitido(campos.semPedagio.checked ? null : await obterPedagioEmitido());
+    await atualizarLogsProcesso();
+    atualizarBotaoIniciar();
+}
+
+async function salvarOpcoesAutomacao() {
+    atualizarOpcaoAutoconfirmarRepom();
+
+    if (!podeAutoconfirmarCte()) {
+        campos.autoConfirmarCte.checked = false;
+    }
+
+    if (!podeUsarRecursosAdministrador()) {
+        campos.autoIniciarCte.checked = false;
+    }
+
+    const servicoAtual = await obterServicoAtual();
+
+    if (servicoAtual) {
+        await salvarServicoAtual({
+            ...servicoAtual,
+            semPedagio: campos.semPedagio.checked,
+            autoConfirmar: campos.autoConfirmar.checked,
+            autoConfirmarCte: podeAutoconfirmarCte() && campos.autoConfirmarCte.checked,
+            autoIniciarCte: podeUsarRecursosAdministrador() && campos.autoIniciarCte.checked
+        });
+    }
+}
+
+function podeAutoconfirmarCte() {
+    return podeUsarRecursosAdministrador();
+}
+
+function podeUsarRecursosAdministrador() {
+    return estado.sessao?.is_admin === true;
+}
+
+function atualizarOpcaoAutoconfirmarRepom() {
+    const desabilitada = campos.semPedagio.checked;
+    if (desabilitada) campos.autoConfirmar.checked = false;
+    campos.autoConfirmar.disabled = desabilitada;
+    campos.autoConfirmar.closest("label")?.classList.toggle("disabled", desabilitada);
+    campos.autoConfirmar.title = desabilitada
+        ? "Indisponivel quando o servico esta marcado sem pedagio"
+        : "";
+}
+
+function aplicarPermissoesAdministrador() {
+    aplicarPermissaoCheckboxAdministrador(
+        campos.autoConfirmarCte,
+        "Disponivel somente para administradores"
+    );
+    aplicarPermissaoCheckboxAdministrador(
+        campos.autoIniciarCte,
+        "Disponivel somente para administradores"
+    );
+}
+
+function aplicarPermissaoCheckboxAdministrador(campo, mensagem) {
+    const permitido = podeUsarRecursosAdministrador();
+
+    campo.disabled = !permitido;
+    campo.closest("label")?.classList.toggle("disabled", !permitido);
+    campo.title = permitido
+        ? ""
+        : mensagem;
+
+    if (!permitido) {
+        campo.checked = false;
+    }
+}
+
+async function atualizarLogsProcesso() {
+    if (!processo.logs) return;
+
+    const storage = await chrome.storage.local.get([
+        STORAGE_KEYS.servicoAtual,
+        STORAGE_KEYS.repomPendente,
+        STORAGE_KEYS.repomPedagioEmitido,
+        STORAGE_KEYS.simplesCtePendente
+    ]);
+
+    renderizarLogsProcesso({
+        servico: storage[STORAGE_KEYS.servicoAtual],
+        repomPendente: storage[STORAGE_KEYS.repomPendente],
+        pedagio: storage[STORAGE_KEYS.repomPedagioEmitido],
+        cte: storage[STORAGE_KEYS.simplesCtePendente]
+    });
+}
+
+function renderizarLogsProcesso(dados = {}) {
+    if (!processo.logs) return;
+
+    const { servico, repomPendente, pedagio, cte } = dados;
+    const semPedagio = Boolean(servico?.semPedagio || cte?.semPedagio);
+    const cteEtapa = cte?.etapa || "";
+    const ciotEtapa = cte?.ciotEtapa || "";
+    const ciotErro = cte?.ciotErro || "";
+    const produtoresErro = Boolean(cte?.erroProdutores || cte?.erroTomador);
+    const mensagemErroProdutores = cte?.erroTomador || "Tomador vazio ou DIVERSOS";
+    const freteErro = Boolean(cte?.erroFrete || cte?.erroKm);
+    const produtoresOk =
+        !produtoresErro &&
+        [
+            "dados_cte_conferidos",
+            "calculadora_frete_clicada",
+            "calculadora_frete_minimo_selecionada",
+            "calculadora_frete_calculada",
+            "informacoes_adicionais_preenchidas",
+            "cte_salvo_emitido"
+        ].includes(cteEtapa);
+
+    const itens = [
+        {
+            texto: "Iniciando automacao",
+            status: servico || repomPendente || cte ? "ok" : "pending"
+        },
+        {
+            texto: semPedagio ? "Pedagio dispensado" : "Pedagio finalizado",
+            status: semPedagio || pedagio?.numeroPedagio ? "ok" : "pending"
+        },
+        {
+            texto: cteEtapa === "cte_salvo_emitido" ? "CTE emitido" : "CTE iniciado",
+            status: cte ? "ok" : "pending"
+        },
+        {
+            texto: produtoresErro ? `Produtores com erro: ${mensagemErroProdutores}` : "Produtores carregados sem erro",
+            status: produtoresErro ? "error" : produtoresOk ? "ok" : "pending"
+        },
+        {
+            texto: freteErro ? "Frete com erro: KM do produtor nao encontrado" : "Valor do frete inserido",
+            status: freteErro ? "error" : ["calculadora_frete_calculada", "informacoes_adicionais_preenchidas", "cte_salvo_emitido"].includes(cteEtapa) ? "ok" : "pending"
+        },
+        {
+            texto: ciotErro
+                ? `CIOT pausado: ${ciotErro}`
+                : ciotEtapa === "retorno_vazio_marcado"
+                    ? "CIOT conferido; Retorno vazio marcado"
+                    : ciotEtapa
+                        ? "CIOT em andamento"
+                        : "CIOT aguardando",
+            status: ciotErro ? "error" : ciotEtapa === "retorno_vazio_marcado" ? "ok" : "pending"
+        }
+    ];
+
+    processo.logs.replaceChildren(
+        ...itens.map((item) => {
+            const linha = document.createElement("li");
+            linha.className = `process-log ${item.status}`;
+            linha.textContent = item.texto;
+            return linha;
+        })
+    );
+}
+
+async function aplicarHistoricoUsuario() {
+    if (!estado.sessao?.nome) {
+        aplicarHistorico([]);
+        return;
+    }
+
+    aplicarHistorico(await obterHistoricoPedagiosUsuario(estado.sessao.nome));
+}
+
+function aplicarHistorico(historico) {
+    const itens = historico.slice(0, 8);
+
+    if (!itens.length) {
+        repomEmitido.historico.textContent = "Nenhum pedagio emitido.";
+        return;
+    }
+
+    repomEmitido.historico.replaceChildren(
+        ...itens.map((item) => {
+            const elemento = document.createElement("article");
+            const titulo = document.createElement("strong");
+            const detalhes = document.createElement("span");
+            const produtor = document.createElement("span");
+
+            elemento.className = "history-item";
+            titulo.textContent = `Pedagio ${item.repom?.numeroPedagio || "-"}`;
+            detalhes.textContent = [
+                item.repom?.empresa,
+                formatarValorRepom(item.repom?.valor),
+                item.repom?.numeroMeioPagamento
+            ].filter(Boolean).join(" | ");
+            produtor.textContent = [
+                item.servico?.produtor,
+                item.servico?.municipio
+            ].filter(Boolean).join(" - ");
+
+            elemento.append(titulo, detalhes, produtor);
+            return elemento;
+        })
+    );
+}
+
+function renderizarProdutores(servico) {
+    const grupos = Array.isArray(servico.gruposProdutores) ? servico.gruposProdutores : [];
+
+    if (!grupos.length) {
+        resumo.produtor.textContent = servico.resumo?.produtor || "-";
+        return;
+    }
+
+    const selecionado = obterGrupoSelecionado(servico) || grupos[0];
+
+    resumo.produtor.replaceChildren(
+        ...grupos.map((grupo) => {
+            const botao = document.createElement("button");
+            const nome = document.createElement("strong");
+            const detalhes = document.createElement("span");
+            const selecionadoAtual = grupo.id === selecionado.id;
+
+            botao.type = "button";
+            botao.className = `producer-group${selecionadoAtual ? " selected" : ""}`;
+            botao.dataset.grupoProdutorId = grupo.id;
+            nome.textContent = grupo.produtor || "-";
+            detalhes.textContent = [
+                `${grupo.quantidade || grupo.notas?.length || 0} NF`,
+                grupo.notas?.length ? `Notas ${grupo.notas.join(", ")}` : "",
+                grupo.municipio || grupo.cidade || "",
+                valorExiste(grupo.distanciaPagamento) ? formatarKm(grupo.distanciaPagamento) : ""
+            ].filter(Boolean).join(" | ");
+
+            botao.append(nome, detalhes);
+            botao.addEventListener("click", () => selecionarGrupoProdutorCte(grupo.id));
+            return botao;
+        })
+    );
+}
+
+async function selecionarGrupoProdutorCte(grupoId) {
+    const servico = await obterServicoAtual();
+
+    if (!servico) return;
+
+    const atualizado = {
+        ...servico,
+        grupoCteSelecionadoId: grupoId
+    };
+
+    estado.grupoCteSelecionadoId = grupoId;
+    await salvarServicoAtual(atualizado);
+    aplicarServicoNaTela(atualizado);
+    setStatus("Grupo de produtor selecionado para o CTE.", "ok");
+}
+
+function prepararServicoParaCte(servico) {
+    if (!servico) return null;
+
+    const caminhao = servico.caminhao?.transportadora ?
+        servico.caminhao :
+        buscarCaminhao(servico.codigo || servico.placa || servico.caminhao?.placa || campos.placa.value);
+    const grupos = Array.isArray(servico.gruposProdutores) ? servico.gruposProdutores : [];
+    const grupo = obterGrupoSelecionado(servico);
+    const servicoComCaminhao = {
+        ...servico,
+        codigo: caminhao?.placa || servico.codigo,
+        caminhao
+    };
+
+    if (!grupo || !grupos.length) return servicoComCaminhao;
+
+    return {
+        ...servicoComCaminhao,
+        grupoCteSelecionadoId: grupo.id,
+        gruposCte: grupos.map(semNfsInternasGrupo),
+        grupoCte: semNfsInternasGrupo(grupo),
+        indiceGrupoCteAtual: 0,
+        resumo: {
+            ...servico.resumo,
+            produtor: grupo.produtor,
+            emitente: grupo.emitente || servico.resumo?.emitente,
+            municipio: grupo.municipio || grupo.cidade || servico.resumo?.municipio,
+            notas: grupo.notas || [],
+            pesoTotal: grupo.pesoTotal || 0,
+            valorTotal: grupo.valorTotal || 0
+        }
+    };
+}
+
+function obterGrupoSelecionado(servico) {
+    const grupos = Array.isArray(servico?.gruposProdutores) ? servico.gruposProdutores : [];
+
+    if (!grupos.length) return null;
+
+    const grupoId = estado.grupoCteSelecionadoId || servico.grupoCteSelecionadoId;
+    return grupos.find((grupo) => grupo.id === grupoId) || grupos[0];
+}
+
+function semNfsInternasGrupo(grupo) {
+    const { nfs, ...restante } = grupo;
+    return restante;
+}
+
+function formatarValorRepom(valor) {
+    if (!valorExiste(valor)) return "-";
+
+    const texto = String(valor).trim();
+    const numero = Number(
+        texto.includes(",")
+            ? texto.replace(/\./g, "").replace(",", ".")
+            : texto
+    );
+
+    return Number.isFinite(numero) ? formatarMoeda(numero) : texto;
+}
+
+function setLoginStatus(mensagem, erro) {
+    login.status.textContent = mensagem;
+    login.status.className = `login-status${erro ? " error" : ""}`;
+}
+
+function setStatus(mensagem, tipo) {
+    const status = $("#status");
+    status.textContent = mensagem;
+    status.className = `status ${tipo === "error" ? "error" : tipo === "empty" ? "empty" : ""}`;
+}

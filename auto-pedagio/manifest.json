@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "Auto-Pedágio REPOM",
+  "version": "1.0.0",
+  "description": "Importa notas por XML ou número e automatiza a emissão do vale-pedágio no REPOM.",
+  "permissions": ["storage", "tabs", "windows"],
+  "host_permissions": ["*://www.repom.com.br/*"],
+  "icons": {
+    "16": "icon/icon-16.png",
+    "32": "icon/icon-32.png",
+    "48": "icon/icon-48.png",
+    "128": "icon/icon-128.png"
+  },
+  "action": {
+    "default_title": "Abrir Auto-Pedágio",
+    "default_icon": {
+      "16": "icon/icon-16.png",
+      "32": "icon/icon-32.png",
+      "48": "icon/icon-48.png",
+      "128": "icon/icon-128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [{
+    "matches": ["*://www.repom.com.br/*"],
+    "js": ["content.js"],
+    "type": "module",
+    "run_at": "document_idle"
+  }],
+  "web_accessible_resources": [{
+    "resources": ["automation/*.js", "automation/repom/*.js", "content/repom/*.js", "shared/*.js"],
+    "matches": ["*://www.repom.com.br/*"]
+  }]
+}

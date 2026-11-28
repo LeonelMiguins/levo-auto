@@ -1,0 +1,3389 @@
+import { STORAGE_KEYS } from "../../shared/constants.js";
+import { normalizar } from "../../shared/text.js";
+import { executarFluxoFrete } from "./flows/frete-flow.js";
+import { executarFluxoEmissaoCte } from "./flows/cte-emissao-flow.js";
+
+const TEMPO_MAX_CTE_MS = 10 * 60 * 1000;
+const TIMEOUT_CTE_MS = 3000;
+const TIMEOUT_AUTOCOMPLETE_MS = 8000;
+const TIMEOUT_CALCULADORA_MS = 12000;
+const TIMEOUT_RECEITA_MS = 60000;
+const INTERVALO_BUSCA_MS = 150;
+const PAUSA_POS_CLIQUE_MS = 450;
+const TEMPO_MINIMO_BUSCA_GRUPO_MS = 3500;
+const TEMPO_VALIDACAO_TOMADOR_MS = 7000;
+
+export function instalarProtecaoEmissaoDestinatario() {
+    if (window.__levoAutoProtecaoDestinatarioInstalada) return;
+
+    window.__levoAutoProtecaoDestinatarioInstalada = true;
+    document.addEventListener("click", (event) => {
+        const botao = event.target?.closest?.("button, [role='button'], .MuiButtonBase-root");
+
+        if (!botao || !normalizar(botao.textContent).includes("SALVAR E EMITIR")) return;
+        if (destinatarioValido()) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        console.error("Emissao do CTe bloqueada: o campo Destinatario esta vazio ou como DIVERSOS.", {
+            destinatario: obterTextoCampo(encontrarCampoDestinatario())
+        });
+    }, true);
+}
+
+export async function selecionarEmpresaSimplesCte() {
+    if (!location.hostname.includes("app.simplescte.com.br")) return false;
+
+    const pendente = await obterPendente();
+
+    if (!pendente) {
+        delete window.__levoAutoNomesDestinatario;
+        return false;
+    }
+
+    window.__levoAutoNomesDestinatario = obterNomesProdutoresXml(pendente);
+
+    if (pendente.etapa === "empresa_selecionada") {
+        return clicarNovoCte(pendente);
+    }
+
+    if (pendente.etapa === "novo_cte_clicado") {
+        return clicarTenhoNotaFiscalEletronica(pendente);
+    }
+
+    if (pendente.etapa === "nfe_clicado") {
+        return iniciarEntradaDocumentosCarga(pendente);
+    }
+
+    if (pendente.etapa === "buscar_xml_pronto" || pendente.etapa === "buscar_xml_clicado") {
+        return carregarXmlsGrupo(pendente);
+    }
+
+    if (pendente.etapa === "xmls_carregados") {
+        return aguardarXmlsGrupo(pendente);
+    }
+
+    if (pendente.etapa === "digitar_chave_clicado") {
+        return preencherChavesAcesso(pendente);
+    }
+
+    if (pendente.etapa === "chaves_preenchidas") {
+        return clicarProximoChaves(pendente);
+    }
+
+    if (pendente.etapa === "proximo_chaves_clicado") {
+        return clicarProximoDocumentosCarga(pendente);
+    }
+
+    if (pendente.etapa === "proximo_documentos_carga_clicado") {
+        return confirmarDadosCteCarregados(pendente);
+    }
+
+    if (pendente.etapa === "dados_cte_conferidos" || pendente.etapa === "produtor_selecionado") {
+        return clicarBotaoCalculadoraFrete(pendente);
+    }
+
+    if (pendente.etapa === "calculadora_frete_clicada") {
+        return selecionarCalculadoraFreteMinimo(pendente);
+    }
+
+    if (pendente.etapa === "calculadora_frete_minimo_selecionada") {
+        return preencherCalculadoraFrete(pendente);
+    }
+
+    if (pendente.etapa === "informacoes_adicionais_preenchidas") {
+        return concluirCte(pendente);
+    }
+
+    if (pendente.etapa !== "selecionar_empresa") return false;
+
+    if (!pendente.transportadora) {
+        console.warn("Transportadora nao informada para selecionar empresa no Simples CTE.", pendente);
+        return false;
+    }
+
+    await esperarDocumentoPronto();
+    await sleep(250);
+
+    const elemento = await aguardarElementoPorTexto(pendente.transportadora, TIMEOUT_CTE_MS);
+
+    if (!elemento) {
+        console.warn("Empresa/transportadora nao encontrada na tela do Simples CTE.", {
+            transportadora: pendente.transportadora,
+            placa: pendente.placa
+        });
+        return false;
+    }
+
+    elemento.scrollIntoView?.({
+        behavior: "smooth",
+        block: "center"
+    });
+    await sleep(150);
+    elemento.click();
+
+    const pendenteAtualizado = {
+        ...pendente,
+        etapa: "empresa_selecionada",
+        atualizadoEm: Date.now(),
+        empresaSelecionada: textoLimpo(elemento.textContent)
+    };
+
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.simplesCtePendente]: pendenteAtualizado
+    });
+
+    console.log("Empresa selecionada no Simples CTE.", {
+        transportadora: pendente.transportadora,
+        elemento: textoLimpo(elemento.textContent)
+    });
+
+    await aguardarMudancaAposClique();
+    await clicarNovoCte(pendenteAtualizado);
+    return true;
+}
+
+async function clicarNovoCte(pendente) {
+    const botao = await aguardarNovoCte(TIMEOUT_CTE_MS) || await aguardarBotaoPorTextos([
+        "NOVO CTE",
+        "NOVO CT-E",
+        "NOVO CTe",
+        "NOVO",
+        "EMITIR CTE",
+        "EMITIR CT-E",
+        "CRIAR CTE",
+        "CRIAR CT-E"
+    ], TIMEOUT_CTE_MS);
+
+    if (!botao) {
+        console.warn("Botao Novo CTE do Simples CTE nao encontrado.", {
+            pendente,
+            botoesVisiveis: listarBotoesVisiveis()
+        });
+        return false;
+    }
+
+    await clicarElemento(botao);
+
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.simplesCtePendente]: {
+            ...pendente,
+            etapa: "novo_cte_clicado",
+            atualizadoEm: Date.now(),
+            botaoNovoCte: textoLimpo(botao.textContent)
+        }
+    });
+
+    console.log("Botao Novo CTE clicado.", {
+        botao: textoLimpo(botao.textContent)
+    });
+
+    await sleep(PAUSA_POS_CLIQUE_MS);
+    await clicarTenhoNotaFiscalEletronica({
+        ...pendente,
+        etapa: "novo_cte_clicado"
+    });
+    return true;
+}
+
+async function clicarTenhoNotaFiscalEletronica(pendente) {
+    const botao = await aguardarBotaoPorTextos([
+        "TENHO NOTA FISCAL ELETRONICA",
+        "NOTA FISCAL ELETRONICA",
+        "NF-E",
+        "NFE"
+    ], TIMEOUT_CTE_MS);
+
+    if (!botao) {
+        console.warn("Botao Tenho Nota Fiscal Eletronica nao encontrado.", pendente);
+        return false;
+    }
+
+    await clicarElemento(botao);
+
+    const pendenteAtualizado = {
+        ...pendente,
+        etapa: "nfe_clicado",
+        atualizadoEm: Date.now(),
+        botaoNfe: textoLimpo(botao.textContent)
+    };
+
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.simplesCtePendente]: pendenteAtualizado
+    });
+
+    console.log("Botao Tenho Nota Fiscal Eletronica clicado.", {
+        botao: textoLimpo(botao.textContent)
+    });
+
+    await sleep(PAUSA_POS_CLIQUE_MS);
+    await iniciarEntradaDocumentosCarga(pendenteAtualizado);
+    return true;
+}
+
+async function iniciarEntradaDocumentosCarga(pendente) {
+    if (grupoAtualTemXml(pendente)) {
+        return clicarBuscarXmlComputador(pendente);
+    }
+
+    return clicarDigitarChaveAcesso(pendente);
+}
+
+async function clicarBuscarXmlComputador(pendente) {
+    const inputInicial = await aguardarInputArquivoXml(800);
+    const inputPreparado = await prepararInputXmlSemAbrirSeletor(TIMEOUT_CTE_MS);
+    const input = inputPreparado || inputInicial;
+
+    if (!input) {
+        console.warn("Input de upload XML nao encontrado/preparado no Simples CTE. Usando chave de acesso como fallback.", {
+            pendente,
+            camposVisiveis: listarCamposVisiveis(),
+            botoesVisiveis: listarBotoesVisiveis()
+        });
+        return clicarDigitarChaveAcesso(pendente);
+    }
+
+    const pendenteAtualizado = {
+        ...pendente,
+        etapa: "buscar_xml_pronto",
+        atualizadoEm: Date.now(),
+        indiceGrupoCteAtual: obterIndiceGrupoCteAtual(pendente),
+        inputXmlEncontrado: true
+    };
+
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.simplesCtePendente]: pendenteAtualizado
+    });
+
+    console.log("Input de XML encontrado no Simples CTE sem abrir seletor de arquivos.", {
+        grupo: obterGrupoCteAtual(pendenteAtualizado)?.produtor || ""
+    });
+
+    await carregarXmlsGrupo(pendenteAtualizado, input);
+    return true;
+}
+
+async function prepararInputXmlSemAbrirSeletor(timeout) {
+    const botao = await aguardarBotaoBuscarXmlComputador(timeout) || await aguardarBotaoPorTextos([
+        "BUSCAR XML NO COMPUTADOR",
+        "BUSCAR XML",
+        "XML NO COMPUTADOR"
+    ], timeout);
+
+    if (!botao) return null;
+
+    const desbloquearSeletor = bloquearSeletorArquivoTemporariamente();
+
+    try {
+        await clicarElemento(botao);
+        await sleep(500);
+    } finally {
+        desbloquearSeletor();
+    }
+
+    return await aguardarInputArquivoXml(2500);
+}
+
+function bloquearSeletorArquivoTemporariamente() {
+    const clickOriginal = HTMLInputElement.prototype.click;
+    const showOpenFilePickerOriginal = window.showOpenFilePicker;
+    const bloquearCliqueInputArquivo = (evento) => {
+        const alvo = evento.target;
+
+        if (alvo instanceof HTMLInputElement && String(alvo.type || "").toLowerCase() === "file") {
+            evento.preventDefault();
+            evento.stopImmediatePropagation();
+        }
+    };
+
+    HTMLInputElement.prototype.click = function clickProtegido() {
+        if (String(this.type || "").toLowerCase() === "file") {
+            return undefined;
+        }
+
+        return clickOriginal.call(this);
+    };
+
+    if (typeof showOpenFilePickerOriginal === "function") {
+        window.showOpenFilePicker = async () => [];
+    }
+
+    document.addEventListener("click", bloquearCliqueInputArquivo, true);
+
+    return () => {
+        HTMLInputElement.prototype.click = clickOriginal;
+        document.removeEventListener("click", bloquearCliqueInputArquivo, true);
+
+        if (typeof showOpenFilePickerOriginal === "function") {
+            window.showOpenFilePicker = showOpenFilePickerOriginal;
+        }
+    };
+}
+
+async function carregarXmlsGrupo(pendente, inputArquivo = null) {
+    const arquivosXml = obterXmlsGrupoAtual(pendente);
+
+    if (!arquivosXml.length) {
+        console.warn("XMLs do grupo nao encontrados. Usando chave de acesso como fallback.", pendente);
+        return clicarDigitarChaveAcesso(pendente);
+    }
+
+    const input = inputArquivo || await aguardarInputArquivoXml(TIMEOUT_CTE_MS);
+
+    if (!input) {
+        console.warn("Input de upload XML nao encontrado no Simples CTE. Usando chave de acesso como fallback.", {
+            pendente,
+            camposVisiveis: listarCamposVisiveis()
+        });
+        return clicarDigitarChaveAcesso(pendente);
+    }
+
+    const arquivos = criarArquivosXml(arquivosXml);
+
+    if (!aplicarArquivosNoInput(input, arquivos)) {
+        console.warn("Nao foi possivel aplicar XMLs no input de arquivo. Usando chave de acesso como fallback.", {
+            pendente,
+            arquivos: arquivos.map((arquivo) => arquivo.name)
+        });
+        return clicarDigitarChaveAcesso(pendente);
+    }
+
+    const pendenteAtualizado = {
+        ...pendente,
+        etapa: "xmls_carregados",
+        atualizadoEm: Date.now(),
+        indiceGrupoCteAtual: obterIndiceGrupoCteAtual(pendente),
+        arquivosXmlCarregados: arquivos.map((arquivo) => arquivo.name)
+    };
+
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.simplesCtePendente]: pendenteAtualizado
+    });
+
+    console.log("XMLs carregados no Simples CTE.", {
+        arquivos: arquivos.map((arquivo) => arquivo.name),
+        grupo: obterGrupoCteAtual(pendenteAtualizado)?.produtor || ""
+    });
+
+    await aguardarXmlsGrupo(pendenteAtualizado);
+    return true;
+}
+
+async function aguardarXmlsGrupo(pendente) {
+    const carregou = await aguardarBuscaChavesDoGrupo(pendente, "");
+
+    if (!carregou) {
+        console.warn("Dados do grupo nao terminaram de carregar apos upload dos XMLs.", {
+            pendente,
+            grupoAtual: obterGrupoCteAtual(pendente),
+            botoesVisiveis: listarBotoesVisiveis()
+        });
+        return false;
+    }
+
+    const pendenteComGrupoProcessado = registrarGrupoCteProcessado(pendente);
+
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.simplesCtePendente]: pendenteComGrupoProcessado
+    });
+
+    if (temProximoGrupoCte(pendenteComGrupoProcessado)) {
+        const proximoPendente = {
+            ...pendenteComGrupoProcessado,
+            etapa: "nfe_clicado",
+            atualizadoEm: Date.now(),
+            indiceGrupoCteAtual: obterIndiceGrupoCteAtual(pendenteComGrupoProcessado) + 1
+        };
+
+        await chrome.storage.local.set({
+            [STORAGE_KEYS.simplesCtePendente]: proximoPendente
+        });
+
+        console.log("Grupo de XMLs carregado. Iniciando proximo grupo no Simples CTE.", {
+            indiceGrupoCteAtual: proximoPendente.indiceGrupoCteAtual,
+            grupos: obterGruposCte(proximoPendente).length
+        });
+
+        await sleep(PAUSA_POS_CLIQUE_MS);
+        await iniciarEntradaDocumentosCarga(proximoPendente);
+        return true;
+    }
+
+    await clicarProximoDocumentosCarga({
+        ...pendenteComGrupoProcessado,
+        etapa: "proximo_chaves_clicado",
+        atualizadoEm: Date.now()
+    });
+    return true;
+}
+
+async function clicarDigitarChaveAcesso(pendente) {
+    const botao = await aguardarBotaoDigitarChaveAcesso(TIMEOUT_CTE_MS) || await aguardarBotaoPorTextos([
+        "DIGITAR CHAVE DE ACESSO",
+        "CHAVE DE ACESSO"
+    ], TIMEOUT_CTE_MS);
+
+    if (!botao) {
+        console.warn("Botao Digitar chave de acesso nao encontrado.", pendente);
+        return false;
+    }
+
+    await clicarElemento(botao);
+
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.simplesCtePendente]: {
+            ...pendente,
+            etapa: "digitar_chave_clicado",
+            atualizadoEm: Date.now(),
+            botaoDigitarChave: textoLimpo(botao.textContent),
+            indiceGrupoCteAtual: obterIndiceGrupoCteAtual(pendente)
+        }
+    });
+
+    console.log("Botao Digitar chave de acesso clicado.", {
+        botao: textoLimpo(botao.textContent)
+    });
+
+    await sleep(PAUSA_POS_CLIQUE_MS);
+    await preencherChavesAcesso({
+        ...pendente,
+        etapa: "digitar_chave_clicado",
+        indiceGrupoCteAtual: obterIndiceGrupoCteAtual(pendente)
+    });
+    return true;
+}
+
+async function preencherChavesAcesso(pendente) {
+    const chaves = obterChavesAcesso(pendente);
+    const grupo = obterGrupoCteAtual(pendente);
+
+    if (!chaves.length) {
+        console.warn("Nenhuma chave de acesso encontrada nos dados do servico.", pendente);
+        return false;
+    }
+
+    const textarea = await aguardarTextareaChaves(TIMEOUT_CTE_MS);
+
+    if (!textarea) {
+        console.warn("Campo de chaves de acesso do Simples CTE nao encontrado.", pendente);
+        return false;
+    }
+
+    textarea.focus?.();
+    textarea.value = chaves.map(formatarChaveAcesso).join("\n");
+    dispararEventos(textarea);
+    textarea.blur?.();
+    dispararEventos(textarea, ["blur"]);
+
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.simplesCtePendente]: {
+            ...pendente,
+            etapa: "chaves_preenchidas",
+            atualizadoEm: Date.now(),
+            chavesAcesso: chaves,
+            indiceGrupoCteAtual: obterIndiceGrupoCteAtual(pendente),
+            grupoCteAtualId: grupo?.id || "",
+            grupoCteAtualProdutor: grupo?.produtor || ""
+        }
+    });
+
+    console.log("Chaves de acesso preenchidas no Simples CTE.", {
+        quantidade: chaves.length,
+        grupo: grupo?.produtor || "sem grupo"
+    });
+
+    await sleep(PAUSA_POS_CLIQUE_MS);
+    await clicarProximoChaves({
+        ...pendente,
+        etapa: "chaves_preenchidas",
+        chavesAcesso: chaves,
+        indiceGrupoCteAtual: obterIndiceGrupoCteAtual(pendente),
+        grupoCteAtualId: grupo?.id || "",
+        grupoCteAtualProdutor: grupo?.produtor || ""
+    });
+    return true;
+}
+
+async function clicarProximoChaves(pendente) {
+    const textoAntesBusca = document.body?.innerText || "";
+    const botao = await aguardarBotaoBuscarChaves(TIMEOUT_CTE_MS) || await aguardarBotaoPorTextos([
+        "BUSCAR",
+        "PROXIMO",
+        "AVANCAR",
+        "CONTINUAR"
+    ], TIMEOUT_CTE_MS);
+
+    if (!botao) {
+        console.warn("Botao Buscar apos chaves de acesso nao encontrado.", {
+            pendente,
+            botoesVisiveis: listarBotoesVisiveis()
+        });
+        return false;
+    }
+
+    await clicarElemento(botao);
+
+    const pendenteAtualizado = {
+        ...pendente,
+        etapa: "proximo_chaves_clicado",
+        atualizadoEm: Date.now(),
+        botaoBuscarChaves: textoLimpo(botao.textContent),
+        indiceGrupoCteAtual: obterIndiceGrupoCteAtual(pendente)
+    };
+
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.simplesCtePendente]: pendenteAtualizado
+    });
+
+    console.log("Botao Buscar apos chaves de acesso clicado.", {
+        botao: textoLimpo(botao.textContent)
+    });
+
+    const modalCarregado = await aguardarBuscaChavesDoGrupo(pendenteAtualizado, textoAntesBusca);
+
+    if (!modalCarregado) {
+        console.warn("Dados do grupo nao terminaram de carregar apos buscar na Receita/Sefaz.", {
+            pendente: pendenteAtualizado,
+            grupoAtual: obterGrupoCteAtual(pendenteAtualizado),
+            botoesVisiveis: listarBotoesVisiveis()
+        });
+        return false;
+    }
+
+    const pendenteComGrupoProcessado = registrarGrupoCteProcessado(pendenteAtualizado);
+
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.simplesCtePendente]: pendenteComGrupoProcessado
+    });
+
+    if (temProximoGrupoCte(pendenteComGrupoProcessado)) {
+        const proximoPendente = {
+            ...pendenteComGrupoProcessado,
+            etapa: "nfe_clicado",
+            atualizadoEm: Date.now(),
+            indiceGrupoCteAtual: obterIndiceGrupoCteAtual(pendenteComGrupoProcessado) + 1
+        };
+
+        await chrome.storage.local.set({
+            [STORAGE_KEYS.simplesCtePendente]: proximoPendente
+        });
+
+        console.log("Grupo de chaves carregado. Iniciando proximo grupo no Simples CTE.", {
+            indiceGrupoCteAtual: proximoPendente.indiceGrupoCteAtual,
+            grupos: obterGruposCte(proximoPendente).length
+        });
+
+        await sleep(PAUSA_POS_CLIQUE_MS);
+        await iniciarEntradaDocumentosCarga(proximoPendente);
+        return true;
+    }
+
+    await clicarProximoDocumentosCarga(pendenteComGrupoProcessado);
+    return true;
+}
+
+async function aguardarBotaoDigitarChaveAcesso(timeout) {
+    const inicio = Date.now();
+
+    await esperarDocumentoPronto();
+    await sleep(150);
+
+    while (Date.now() - inicio < timeout) {
+        const botao = encontrarBotaoDigitarChaveAcesso();
+
+        if (botao) return botao;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+async function aguardarBuscaChavesDoGrupo(pendente, textoAntesBusca) {
+    const inicio = Date.now();
+    const textoAntes = normalizar(textoAntesBusca);
+    let confirmacoesPronto = 0;
+
+    while (Date.now() - inicio < TIMEOUT_RECEITA_MS) {
+        const tempoDecorrido = Date.now() - inicio;
+        const textoAtual = normalizar(document.body?.innerText || "");
+        const modalDocumentosDisponivel = modalDadosCargaEstaNaTela(textoAtual);
+        const carregando = existemIndicadoresCarregamento();
+        const formularioChavesAberto = campoChavesAcessoAberto();
+        const houveMudancaTela = textoAtual !== textoAntes;
+        const grupoAtualVisivel = grupoCteAtualApareceNaTela(pendente);
+        const precisaConfirmarGrupo = obterGruposCte(pendente).length > 1;
+        const botaoProximoDisponivel = encontrarBotaoProximoDocumentosCarga();
+        const documentosGrupoCarregados = documentosGrupoAparecemNaTabela(pendente);
+        const conteudoGrupoReconhecido = precisaConfirmarGrupo
+            ? documentosGrupoCarregados || grupoAtualVisivel
+            : documentosGrupoCarregados || houveMudancaTela || grupoAtualVisivel;
+        const aindaCarregando = carregando && !documentosGrupoCarregados;
+
+        if (
+            (modalDocumentosDisponivel || botaoProximoDisponivel) &&
+            tempoDecorrido >= TEMPO_MINIMO_BUSCA_GRUPO_MS &&
+            !aindaCarregando &&
+            !formularioChavesAberto &&
+            botaoProximoDisponivel &&
+            conteudoGrupoReconhecido
+        ) {
+            confirmacoesPronto += 1;
+
+            if (confirmacoesPronto >= 2) return true;
+        } else {
+            confirmacoesPronto = 0;
+        }
+
+        await sleep(500);
+    }
+
+    return false;
+}
+
+function documentosGrupoAparecemNaTabela(pendente) {
+    const linhas = Array.from(document.querySelectorAll(
+        "#modal-root tbody tr[data-testid^='table-row-'], #modal-root tbody tr.data-table-table-row"
+    )).filter(isVisivel);
+
+    if (!linhas.length) return false;
+
+    const grupo = obterGrupoCteAtual(pendente);
+
+    if (!grupo) return true;
+
+    const textoTabela = normalizar(linhas.map((linha) => linha.textContent || "").join(" "));
+    const chaves = obterChavesEsperadasGrupo(grupo);
+
+    if (chaves.length) {
+        return chaves.every((chave) => textoTabela.includes(normalizar(chave)));
+    }
+
+    const notas = (Array.isArray(grupo.notas) ? grupo.notas : [])
+        .map((nota) => String(nota || "").replace(/\D/g, ""))
+        .filter(Boolean);
+
+    return !notas.length || notas.every((nota) => textoTabela.includes(nota));
+}
+
+function obterChavesEsperadasGrupo(grupo) {
+    const chavesDiretas = Array.isArray(grupo?.chavesAcesso) ? grupo.chavesAcesso : [];
+    const chavesXml = Array.isArray(grupo?.arquivosXml)
+        ? grupo.arquivosXml.map((arquivo) => arquivo?.chave || arquivo?.chaveAcesso)
+        : [];
+
+    return [...chavesDiretas, ...chavesXml]
+        .map((chave) => String(chave || "").replace(/\D/g, ""))
+        .filter((chave) => chave.length === 44);
+}
+
+function encontrarBotaoProximoDocumentosCarga() {
+    const modalEstaVisivel = (texto) => {
+        const normalizado = normalizar(texto);
+        return normalizado.includes("INFORME OS DOCUMENTOS DA CARGA") ||
+            normalizado.includes("INFORME OS DADOS DA CARGA");
+    };
+    const modais = Array.from(document.querySelectorAll(
+        "[role='dialog'], [aria-modal='true'], .MuiDialog-root, #modal-root"
+    ))
+        .filter(isVisivel)
+        .filter((modal) => modalEstaVisivel(modal.textContent))
+        .sort((a, b) => a.querySelectorAll("button, [role='button']").length - b.querySelectorAll("button, [role='button']").length);
+    const botoesDoModal = modais.flatMap((modal) =>
+        Array.from(modal.querySelectorAll("button, [role='button'], .MuiButtonBase-root"))
+    );
+    const botaoPorTexto = botoesDoModal.find((botao) =>
+        isVisivel(botao) &&
+        !botao.disabled &&
+        botao.getAttribute("aria-disabled") !== "true" &&
+        normalizar(botao.textContent) === "PROXIMO"
+    );
+
+    if (botaoPorTexto) return botaoPorTexto;
+
+    const seletores = [
+        "[data-testid='/cte--modal-Informe os documentos da carga--button-proximo']",
+        "button#cte-wizard-submit-button"
+    ];
+
+    for (const seletor of seletores) {
+        const botao = document.querySelector(seletor);
+
+        if (
+            botao &&
+            isVisivel(botao) &&
+            !botao.disabled &&
+            botao.getAttribute("aria-disabled") !== "true"
+        ) {
+            return botao;
+        }
+    }
+
+    const botoes = Array.from(document.querySelectorAll("button, [role='button'], .MuiButtonBase-root"))
+        .filter(isVisivel)
+        .filter((botao) => !botao.disabled && botao.getAttribute("aria-disabled") !== "true")
+        .filter((botao) => normalizar(botao.textContent) === "PROXIMO");
+
+    return botoes.find((botao) => {
+        const modal = botao.closest("[role='dialog'], [aria-modal='true'], .MuiDialog-root, #modal-root");
+        return Boolean(modal && modalEstaVisivel(modal.textContent));
+    }) || botoes[0] || null;
+}
+
+function modalDadosCargaEstaNaTela(texto = document.body?.innerText || "") {
+    const normalizado = normalizar(texto);
+    return normalizado.includes("INFORME OS DOCUMENTOS DA CARGA") ||
+        normalizado.includes("INFORME OS DADOS DA CARGA");
+}
+
+function campoChavesAcessoAberto() {
+    const textarea =
+        document.querySelector("textarea[name='chaves_acesso_csv']") ||
+        document.querySelector("textarea[placeholder*='5500']");
+
+    return Boolean(textarea && isVisivel(textarea));
+}
+
+function existemIndicadoresCarregamento() {
+    const texto = normalizar(document.body?.innerText || "");
+
+    if (
+        texto.includes("CARREGANDO") ||
+        texto.includes("BUSCANDO") ||
+        texto.includes("CONSULTANDO") ||
+        texto.includes("PROCESSANDO") ||
+        texto.includes("AGUARDE")
+    ) {
+        return true;
+    }
+
+    return Array.from(document.querySelectorAll([
+        "[role='progressbar']",
+        ".MuiCircularProgress-root",
+        ".MuiLinearProgress-root",
+        "[class*='loading']",
+        "[class*='Loading']",
+        "[class*='spinner']",
+        "[class*='Spinner']",
+        "[class*='progress']",
+        "[class*='Progress']"
+    ].join(","))).some(isVisivel);
+}
+
+function grupoCteAtualApareceNaTela(pendente) {
+    const grupo = obterGrupoCteAtual(pendente);
+
+    if (!grupo) return false;
+
+    const textoAtual = normalizar(document.body?.innerText || "");
+    const notas = Array.isArray(grupo.notas) ? grupo.notas : [];
+    const chaves = Array.isArray(grupo.chavesAcesso) ? grupo.chavesAcesso : [];
+
+    return notas.some((nota) => textoAtual.includes(normalizar(nota))) ||
+        chaves.some((chave) => textoAtual.includes(normalizar(formatarChaveAcesso(chave))) || textoAtual.includes(normalizar(chave))) ||
+        textoAtual.includes(normalizar(grupo.produtor || ""));
+}
+
+function encontrarBotaoDigitarChaveAcesso() {
+    const botaoPorId = document.querySelector("button#chave-acesso");
+
+    if (botaoPorId && isVisivel(botaoPorId) && !botaoPorId.disabled) {
+        return botaoPorId;
+    }
+
+    const icone = document.querySelector("svg[data-icon-name='line-file-contract-solid']");
+    const botaoPorIcone = icone?.closest("button, [role='button']");
+
+    if (botaoPorIcone && isVisivel(botaoPorIcone) && !botaoPorIcone.disabled) {
+        return botaoPorIcone;
+    }
+
+    return null;
+}
+
+async function aguardarBotaoBuscarXmlComputador(timeout) {
+    const inicio = Date.now();
+
+    await esperarDocumentoPronto();
+    await sleep(150);
+
+    while (Date.now() - inicio < timeout) {
+        const botao = encontrarBotaoBuscarXmlComputador();
+
+        if (botao) return botao;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+function encontrarBotaoBuscarXmlComputador() {
+    const botaoPorId = document.querySelector("button#buscar-xml");
+
+    if (botaoPorId && isVisivel(botaoPorId) && !botaoPorId.disabled) {
+        return botaoPorId;
+    }
+
+    const icone = document.querySelector([
+        "svg[data-icon-name='line-file-upload-light']",
+        "svg[data-icon-name='line-file-upload-solid']"
+    ].join(","));
+    const botaoPorIcone = icone?.closest("button, [role='button']");
+
+    if (botaoPorIcone && isVisivel(botaoPorIcone) && !botaoPorIcone.disabled) {
+        return botaoPorIcone;
+    }
+
+    return encontrarBotaoPorTextos([
+        "BUSCAR XML NO COMPUTADOR",
+        "BUSCAR XML",
+        "XML NO COMPUTADOR"
+    ]);
+}
+
+async function aguardarInputArquivoXml(timeout) {
+    const inicio = Date.now();
+
+    await esperarDocumentoPronto();
+    await sleep(150);
+
+    while (Date.now() - inicio < timeout) {
+        const input = encontrarInputArquivoXml();
+
+        if (input) return input;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+function encontrarInputArquivoXml() {
+    const inputs = Array.from(document.querySelectorAll("input[type='file']"));
+    const botaoXml = encontrarBotaoBuscarXmlComputador();
+    const inputRelacionado = encontrarInputArquivoNoMesmoBloco(botaoXml);
+
+    if (inputRelacionado) return inputRelacionado;
+
+    return inputs.find((input) => {
+        const accept = normalizar(input.accept || "");
+
+        return !input.disabled &&
+            (!accept || accept.includes("XML") || accept.includes("TEXT") || accept.includes("APPLICATION"));
+    }) || inputs.find((input) => !input.disabled) || null;
+}
+
+function encontrarInputArquivoNoMesmoBloco(botao) {
+    if (!botao) return null;
+
+    let atual = botao.parentElement;
+    let profundidade = 0;
+
+    while (atual && atual !== document.body && profundidade < 6) {
+        const texto = normalizar(atual.textContent || "");
+        const contemBotaoXml =
+            texto.includes("BUSCAR XML NO COMPUTADOR") ||
+            Boolean(atual.querySelector([
+                "button#buscar-xml",
+                "svg[data-icon-name='line-file-upload-light']",
+                "svg[data-icon-name='line-file-upload-solid']"
+            ].join(",")));
+        const input = contemBotaoXml ? atual.querySelector("input[type='file']") : null;
+
+        if (input && !input.disabled) return input;
+
+        atual = atual.parentElement;
+        profundidade += 1;
+    }
+
+    return null;
+}
+
+function criarArquivosXml(arquivosXml) {
+    return arquivosXml.map((arquivo, indice) => {
+        const nome = garantirNomeXml(arquivo.nome || arquivo.chave || arquivo.numero || `nota-${indice + 1}.xml`);
+
+        return new File([arquivo.conteudo], nome, {
+            type: "text/xml",
+            lastModified: Date.now()
+        });
+    });
+}
+
+function aplicarArquivosNoInput(input, arquivos) {
+    try {
+        const dataTransfer = new DataTransfer();
+
+        arquivos.forEach((arquivo) => dataTransfer.items.add(arquivo));
+        input.files = dataTransfer.files;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+
+        return input.files?.length === arquivos.length;
+    } catch (error) {
+        console.warn("Falha ao aplicar arquivos no input[type=file].", error);
+        return false;
+    }
+}
+
+function garantirNomeXml(nome) {
+    const texto = String(nome || "nota.xml").trim();
+
+    return /\.xml$/i.test(texto) ? texto : `${texto}.xml`;
+}
+
+async function aguardarBotaoBuscarChaves(timeout) {
+    const inicio = Date.now();
+
+    await esperarDocumentoPronto();
+    await sleep(150);
+
+    while (Date.now() - inicio < timeout) {
+        const botao = encontrarBotaoBuscarChaves();
+
+        if (botao) return botao;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+function encontrarBotaoBuscarChaves() {
+    const botoes = Array.from(document.querySelectorAll([
+        "button.line-button-contained",
+        "button.css-wicqjn",
+        "button[type='button']",
+        "button"
+    ].join(",")))
+        .filter(isVisivel)
+        .filter((elemento) => !elemento.disabled);
+
+    return botoes.find((elemento) => normalizar(elemento.textContent) === "BUSCAR") ||
+        botoes.find((elemento) => normalizar(elemento.textContent).includes("BUSCAR")) ||
+        null;
+}
+
+async function clicarProximoDocumentosCarga(pendente) {
+    const grupos = obterGruposCte(pendente);
+    const gruposProcessados = obterIdsGruposCteProcessados(pendente);
+
+    if (grupos.length > 1 && gruposProcessados.size < grupos.length) {
+        console.warn("Nem todos os grupos de produtores foram carregados antes de clicar em Proximo.", {
+            totalGrupos: grupos.length,
+            gruposProcessados: Array.from(gruposProcessados),
+            grupoAtual: obterGrupoCteAtual(pendente)?.produtor || ""
+        });
+        return false;
+    }
+
+    const inicioEsperaModal = Date.now();
+    let modalCarregado = modalDadosCargaEstaNaTela();
+
+    while (!modalCarregado && Date.now() - inicioEsperaModal < TIMEOUT_RECEITA_MS) {
+        await sleep(500);
+        modalCarregado = modalDadosCargaEstaNaTela();
+    }
+
+    if (!modalCarregado) {
+        console.warn("Modal Informe os documentos da carga nao esta disponivel.", pendente);
+        return false;
+    }
+
+    const inicioBuscaBotao = Date.now();
+    let botao = encontrarBotaoProximoDocumentosCarga();
+
+    while (!botao && Date.now() - inicioBuscaBotao < TIMEOUT_CTE_MS) {
+        await sleep(INTERVALO_BUSCA_MS);
+        botao = encontrarBotaoProximoDocumentosCarga();
+    }
+
+    if (!botao) {
+        console.warn("Botao Proximo do modal Informe os documentos da carga nao encontrado.", {
+            pendente,
+            botoesVisiveis: listarBotoesVisiveis()
+        });
+        return false;
+    }
+
+    await clicarElemento(botao);
+
+    const pendenteAtualizado = {
+        ...pendente,
+        etapa: "proximo_documentos_carga_clicado",
+        atualizadoEm: Date.now(),
+        botaoProximoDocumentosCarga: textoLimpo(botao.textContent)
+    };
+
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.simplesCtePendente]: pendenteAtualizado
+    });
+
+    console.log("Botao Proximo do modal Informe os documentos da carga clicado.", {
+        botao: textoLimpo(botao.textContent)
+    });
+
+    await sleep(PAUSA_POS_CLIQUE_MS);
+    await confirmarDadosCteCarregados(pendenteAtualizado);
+    return true;
+}
+
+async function confirmarDadosCteCarregados(pendente) {
+    const carregou = await aguardarTextoNaTela("CONFIRA OS DADOS DO CTE", TIMEOUT_RECEITA_MS);
+
+    if (!carregou) {
+        console.warn("Tela Confira os dados do CTe nao carregou apos importar XMLs.", {
+            pendente,
+            camposVisiveis: listarCamposVisiveis(),
+            botoesVisiveis: listarBotoesVisiveis()
+        });
+        return false;
+    }
+
+    if (!await validarDestinatarioDoXml(pendente)) return false;
+
+    const tomadorValido = await validarTomadorCarregadoPeloXml(pendente);
+
+    if (tomadorValido === "calculadora_iniciada") return true;
+
+    if (!tomadorValido) return false;
+
+    const pendenteAtualizado = {
+        ...pendente,
+        etapa: "dados_cte_conferidos",
+        atualizadoEm: Date.now(),
+        origemDadosCte: grupoAtualTemXml(pendente) ? "xml" : "chave_acesso",
+        erroProdutores: false,
+        erroTomador: "",
+        erroFrete: false,
+        erroKm: ""
+    };
+
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.simplesCtePendente]: pendenteAtualizado
+    });
+
+    console.log("Dados do CTe carregados pelo Simples CTE. Seguindo sem preencher produtor manualmente.");
+
+    await sleep(PAUSA_POS_CLIQUE_MS);
+    await clicarBotaoCalculadoraFrete(pendenteAtualizado);
+    return true;
+}
+
+async function validarTomadorCarregadoPeloXml(pendente) {
+    const campo = await aguardarCampoTomador(TIMEOUT_AUTOCOMPLETE_MS);
+
+    if (!campo) {
+        await registrarErroTomador(pendente, "Campo Tomador nao encontrado", "");
+        console.warn("Campo Tomador nao encontrado para validar os dados carregados pelo XML.", {
+            pendente,
+            camposVisiveis: listarCamposVisiveis()
+        });
+        return false;
+    }
+
+    const validacao = await aguardarTomadorCarregadoValido(TEMPO_VALIDACAO_TOMADOR_MS);
+
+    if (!validacao.valido) {
+        const produtorSelecionado = await preencherProdutorTomador(pendente);
+
+        if (produtorSelecionado) return "calculadora_iniciada";
+
+        await registrarErroTomador(pendente, "Tomador vazio ou DIVERSOS", validacao.valor);
+
+        console.warn("Tomador vazio ou DIVERSOS apos carregar XML. A automacao foi interrompida antes da calculadora.", {
+            pendente,
+            valorCampo: validacao.valor,
+            camposVisiveis: listarCamposVisiveis()
+        });
+        return false;
+    }
+
+    return true;
+}
+
+async function validarDestinatarioDoXml(pendente) {
+    const campo = await aguardarCampoDestinatario(TIMEOUT_AUTOCOMPLETE_MS);
+    const nomesXml = obterNomesProdutoresXml(pendente);
+
+    if (!campo || !nomesXml.length) {
+        await registrarErroTomador(
+            pendente,
+            campo ? "Nome do produtor nao encontrado nos XMLs" : "Campo Destinatario nao encontrado",
+            obterTextoCampo(campo)
+        );
+        console.error("CTe bloqueado: nao foi possivel validar o nome do Destinatario com os XMLs.", {
+            quantidadeProdutoresXml: nomesXml.length,
+            campoEncontrado: Boolean(campo),
+            destinatarioPreenchido: Boolean(obterTextoCampo(campo))
+        });
+        return false;
+    }
+
+    const valorCampo = obterTextoCampo(campo);
+    if (nomesXml.some((nome) => destinatarioCorrespondeNome(valorCampo, nome))) return true;
+
+    const selecionado = await selecionarDestinatarioPorNome(campo, nomesXml);
+
+    if (selecionado) return true;
+
+    await registrarErroTomador(
+        pendente,
+        "Destinatario vazio, DIVERSOS ou sem nome identico ao produtor dos XMLs",
+        obterTextoCampo(encontrarCampoDestinatario())
+    );
+    console.error("CTe bloqueado: nenhum cadastro possui nome completo identico ao produtor dos XMLs.", {
+        quantidadeProdutoresXml: nomesXml.length,
+        destinatarioPreenchido: Boolean(obterTextoCampo(encontrarCampoDestinatario()))
+    });
+    return false;
+}
+
+function obterNomesProdutoresXml(pendente) {
+    const nomes = [];
+    const nfs = Array.isArray(pendente.servico?.nfs) ? pendente.servico.nfs : [];
+
+    nfs.forEach((nf) => nomes.push(nf?.produtor));
+    obterGruposCte(pendente).forEach((grupo) => nomes.push(grupo?.produtor));
+
+    const vistos = new Set();
+    return nomes
+        .map(textoLimpo)
+        .filter((nome) => nome && nome !== "-")
+        .filter((nome) => {
+            const chave = normalizar(nome);
+            if (vistos.has(chave)) return false;
+            vistos.add(chave);
+            return true;
+        });
+}
+
+async function aguardarCampoDestinatario(timeout) {
+    const inicio = Date.now();
+
+    while (Date.now() - inicio < timeout) {
+        const campo = encontrarCampoDestinatario();
+        if (campo) return campo;
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+async function selecionarDestinatarioPorNome(campo, nomes) {
+    const controle = campo.matches?.("input") ? campo : campo.querySelector?.("input");
+
+    if (!controle || controle.readOnly || controle.disabled) {
+        await clicarElemento(campo);
+        await sleep(PAUSA_POS_CLIQUE_MS);
+    }
+
+    for (const nome of nomes) {
+        if (controle && !controle.readOnly && !controle.disabled) {
+            await preencherInputBusca(controle, nome);
+        }
+
+        const opcao = await aguardarOpcaoPorNome(nome, 2000);
+        if (!opcao) continue;
+
+        await clicarElemento(resolverElementoClicavel(opcao));
+        if (await aguardarDestinatarioComNome(nome, TIMEOUT_CTE_MS)) return true;
+    }
+
+    return false;
+}
+
+async function aguardarOpcaoPorNome(nome, timeout) {
+    const inicio = Date.now();
+
+    while (Date.now() - inicio < timeout) {
+        const opcoes = Array.from(document.querySelectorAll([
+            "[role='option']",
+            "[role='listbox'] *",
+            "li",
+            ".MuiAutocomplete-option",
+            ".MuiMenuItem-root",
+            ".MuiPopper-root *",
+            ".MuiPaper-root *",
+            "[class*='option']",
+            "[class*='Option']"
+        ].join(",")))
+            .filter(isVisivel)
+            .filter((opcao) => destinatarioCorrespondeNome(opcao.textContent, nome))
+            .sort((a, b) => textoLimpo(a.textContent).length - textoLimpo(b.textContent).length);
+
+        if (opcoes.length) return opcoes[0];
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+async function aguardarDestinatarioComNome(nome, timeout) {
+    const inicio = Date.now();
+
+    while (Date.now() - inicio < timeout) {
+        const campo = encontrarCampoDestinatario();
+        if (campo && destinatarioCorrespondeNome(obterTextoCampo(campo), nome)) return true;
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return false;
+}
+
+function destinatarioCorrespondeNome(valor, nome) {
+    const valorNormalizado = normalizar(valor);
+    const nomeNormalizado = normalizar(nome);
+
+    return Boolean(nomeNormalizado) && (
+        valorNormalizado === nomeNormalizado ||
+        valorNormalizado.startsWith(`${nomeNormalizado} -`)
+    );
+}
+
+async function aguardarTomadorCarregadoValido(timeout) {
+    const inicio = Date.now();
+    let ultimoValor = "";
+
+    while (Date.now() - inicio < timeout) {
+        const campo = encontrarCampoTomador();
+        const valor = campo ? obterTextoCampo(campo) : "";
+        const valorNormalizado = normalizar(valor);
+
+        if (valor) ultimoValor = valor;
+        if (!tomadorInvalido(valorNormalizado)) {
+            return {
+                valido: true,
+                valor
+            };
+        }
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return {
+        valido: false,
+        valor: ultimoValor
+    };
+}
+
+async function registrarErroTomador(pendente, erroTomador, valorTomador) {
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.simplesCtePendente]: {
+            ...pendente,
+            etapa: "dados_cte_erro_produtores",
+            atualizadoEm: Date.now(),
+            erroProdutores: true,
+            erroTomador,
+            valorTomador
+        }
+    });
+}
+
+async function preencherProdutorTomador(pendente) {
+    const produtor = obterProdutorNota(pendente);
+
+    if (!produtor) {
+        console.warn("Produtor nao encontrado nos dados da nota para preencher no Simples CTE.", pendente);
+        return false;
+    }
+
+    const input = await aguardarCampoTomador(TIMEOUT_AUTOCOMPLETE_MS);
+
+    if (!input) {
+        console.warn("Campo Tomador nao encontrado no Simples CTE.", {
+            pendente,
+            camposVisiveis: listarCamposVisiveis()
+        });
+        return false;
+    }
+
+    if (campoTomadorValido(input, produtor)) {
+        return concluirProdutorTomador(pendente, produtor, "preenchido automaticamente");
+    }
+
+    await preencherCampoTomador(input, produtor);
+
+    if (campoTomadorValido(input, produtor)) {
+        return concluirProdutorTomador(pendente, produtor, "preenchido no campo");
+    }
+
+    const opcao = await aguardarOpcaoAutocomplete(produtor, TIMEOUT_AUTOCOMPLETE_MS);
+
+    if (!opcao) {
+        if (campoTomadorValido(input, produtor)) {
+            return concluirProdutorTomador(pendente, produtor, "preenchido apos busca");
+        }
+
+        console.warn("Tomador vazio, DIVERSOS ou opcao do produtor nao encontrada no autocomplete do Simples CTE.", {
+            produtor,
+            pendente,
+            valorCampo: obterTextoCampo(input),
+            opcoesVisiveis: listarOpcoesAutocomplete()
+        });
+        return false;
+    }
+
+    await clicarElemento(opcao);
+
+    if (!await aguardarCampoTomadorValido(produtor, TIMEOUT_CTE_MS)) {
+        console.warn("Tomador nao ficou valido apos selecionar produtor no Simples CTE.", {
+            produtor,
+            pendente,
+            valorCampo: obterTextoCampo(input),
+            camposVisiveis: listarCamposVisiveis()
+        });
+        return false;
+    }
+
+    return concluirProdutorTomador(pendente, produtor, textoLimpo(opcao.textContent));
+}
+
+async function concluirProdutorTomador(pendente, produtor, origemSelecao) {
+    const pendenteAtualizado = {
+        ...pendente,
+        etapa: "produtor_selecionado",
+        atualizadoEm: Date.now(),
+        produtorSelecionado: produtor,
+        opcaoProdutor: origemSelecao
+    };
+
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.simplesCtePendente]: pendenteAtualizado
+    });
+
+    console.log("Produtor selecionado no Simples CTE.", {
+        produtor,
+        opcao: origemSelecao
+    });
+
+    await sleep(PAUSA_POS_CLIQUE_MS);
+    await clicarBotaoCalculadoraFrete(pendenteAtualizado);
+    return true;
+}
+
+async function clicarBotaoCalculadoraFrete(pendente) {
+    const botao = await aguardarBotaoCalculadoraFrete(TIMEOUT_CALCULADORA_MS);
+
+    if (!botao) {
+        console.warn("Botao da calculadora de frete nao encontrado no Simples CTE.", {
+            pendente,
+            botoesVisiveis: listarBotoesVisiveis()
+        });
+        return false;
+    }
+
+    await clicarElemento(botao);
+
+    const pendenteAtualizado = {
+        ...pendente,
+        etapa: "calculadora_frete_clicada",
+        atualizadoEm: Date.now()
+    };
+
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.simplesCtePendente]: pendenteAtualizado
+    });
+
+    console.log("Botao da calculadora de frete clicado.");
+
+    await sleep(PAUSA_POS_CLIQUE_MS);
+    await selecionarCalculadoraFreteMinimo(pendenteAtualizado);
+    return true;
+}
+
+async function selecionarCalculadoraFreteMinimo(pendente) {
+    const opcao = await aguardarElementoPorTexto("CALCULADORA DE FRETE MINIMO", TIMEOUT_CTE_MS);
+
+    if (!opcao) {
+        console.warn("Opcao Calculadora de frete minimo nao encontrada no Simples CTE.", {
+            pendente,
+            opcoesVisiveis: listarOpcoesAutocomplete(),
+            botoesVisiveis: listarBotoesVisiveis()
+        });
+        return false;
+    }
+
+    await clicarElemento(opcao);
+
+    const pendenteAtualizado = {
+        ...pendente,
+        etapa: "calculadora_frete_minimo_selecionada",
+        atualizadoEm: Date.now(),
+        opcaoCalculadoraFrete: textoLimpo(opcao.textContent)
+    };
+
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.simplesCtePendente]: pendenteAtualizado
+    });
+
+    console.log("Opcao Calculadora de frete minimo selecionada.", {
+        opcao: textoLimpo(opcao.textContent)
+    });
+
+    await sleep(PAUSA_POS_CLIQUE_MS);
+    await preencherCalculadoraFrete(pendenteAtualizado);
+    return true;
+}
+
+async function preencherCalculadoraFrete(pendente) {
+    const resultadoFrete = await executarFluxoFrete({
+        preencherVeiculo: () => preencherVeiculoTracaoCalculadora(pendente),
+        async selecionarTipoCarga() {
+            const ok = await selecionarOpcaoSelectPorRotulo("TIPO DE CARGA", "GRANEL SOLIDO", 1);
+            if (!ok) console.warn("Campo Tipo de carga nao encontrado/preenchido na calculadora de frete.", {
+                pendente,
+                camposVisiveis: listarCamposVisiveis()
+            });
+            return ok;
+        },
+        preencherDistancia: () => preencherDistanciaCalculadora(pendente),
+        async marcarRetornoVazio() {
+            const ok = await marcarCheckboxCalculadora("RETORNO VAZIO");
+            if (!ok) console.warn("Checkbox Retorno vazio nao encontrado/marcado na calculadora de frete.", {
+                pendente,
+                camposVisiveis: listarCamposVisiveis()
+            });
+            return ok;
+        },
+        async marcarAltoDesempenho() {
+            const ok = await marcarCheckboxCalculadora("ALTO DESEMPENHO");
+            if (!ok) console.warn("Checkbox E alto desempenho nao encontrado/marcado na calculadora de frete.", {
+                pendente,
+                camposVisiveis: listarCamposVisiveis()
+            });
+            return ok;
+        },
+        obterDistancia: () => obterDistanciaPagamento(pendente),
+        async calcular() {
+            const ok = await clicarCalcularFrete();
+            if (!ok) console.warn("Botao Calcular nao encontrado na calculadora de frete.", {
+                pendente,
+                botoesVisiveis: listarBotoesVisiveis()
+            });
+            return ok;
+        },
+        async confirmar() {
+            const ok = await clicarConfirmarFreteCalculado();
+            if (!ok) console.warn("Botao Confirmar nao encontrado apos calcular frete.", {
+                pendente,
+                botoesVisiveis: listarBotoesVisiveis()
+            });
+            return ok;
+        },
+        async abrirInformacoesAdicionais() {
+            const ok = await clicarInformacoesAdicionais();
+            if (!ok) console.warn("Botao Informacoes adicionais nao encontrado apos confirmar frete.", {
+                pendente,
+                botoesVisiveis: listarBotoesVisiveis()
+            });
+            return ok;
+        },
+        preencherObservacao: (distancia) => preencherObservacaoGeralComKm(pendente, distancia)
+    });
+
+    if (!resultadoFrete.ok) return false;
+    const { distanciaFrete } = resultadoFrete;
+
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.simplesCtePendente]: {
+            ...pendente,
+            etapa: "informacoes_adicionais_preenchidas",
+            atualizadoEm: Date.now(),
+            distanciaFrete,
+            erroFrete: false,
+            erroKm: ""
+        }
+    });
+
+    console.log("Frete confirmado e informacoes adicionais preenchidas no Simples CTE.");
+
+    return concluirCte({
+        ...pendente,
+        etapa: "informacoes_adicionais_preenchidas",
+        distanciaFrete,
+        erroFrete: false,
+        erroKm: ""
+    });
+}
+
+async function concluirCte(pendente) {
+    const emissao = await executarFluxoEmissaoCte({
+        salvar: salvarCteAntesDaEmissao,
+        deveEmitir: () => deveAutoconfirmarCte(pendente),
+        emitir: () => finalizarCteSeAutoconfirmar(pendente)
+    });
+    return emissao.etapa === "salvar" ? false : true;
+}
+
+async function salvarCteAntesDaEmissao() {
+    await sleep(150);
+    const botaoSalvar = Array.from(document.querySelectorAll("button[type='submit']"))
+        .filter(isVisivel)
+        .find((botao) => textoLimpo(botao.textContent).toUpperCase() === "SALVAR");
+
+    if (!botaoSalvar || botaoSalvar.disabled) {
+        console.warn("Botao Salvar do CTe nao encontrado ou indisponivel antes da emissao.", {
+            botoesVisiveis: listarBotoesVisiveis()
+        });
+        return false;
+    }
+
+    await clicarElemento(botaoSalvar);
+    await sleep(400);
+    console.log("CTe salvo antes da etapa opcional de emissao.");
+    return true;
+}
+
+async function finalizarCteSeAutoconfirmar(pendente) {
+    if (!await deveAutoconfirmarCte(pendente)) return false;
+
+    if (!destinatarioValido()) {
+        console.error("Autoconfirmacao bloqueada: o campo Destinatario esta vazio ou como DIVERSOS.", {
+            destinatario: obterTextoCampo(encontrarCampoDestinatario()),
+            pendente
+        });
+        return false;
+    }
+
+    const botao = await aguardarBotaoSalvarEmitirCte(TIMEOUT_AUTOCOMPLETE_MS);
+
+    if (!botao) {
+        console.warn("Botao Salvar e emitir nao encontrado para autoconfirmar CTE.", {
+            pendente,
+            botoesVisiveis: listarBotoesVisiveis()
+        });
+        return false;
+    }
+
+    await clicarElemento(botao);
+
+    await chrome.storage.local.set({
+        [STORAGE_KEYS.simplesCtePendente]: {
+            ...pendente,
+            etapa: "cte_salvo_emitido",
+            atualizadoEm: Date.now(),
+            autoConfirmadoCte: true,
+            botaoSalvarEmitir: textoLimpo(botao.textContent)
+        }
+    });
+
+    console.log("CTE salvo e emitido automaticamente.");
+    return true;
+}
+
+async function deveAutoconfirmarCte(pendente) {
+    const storage = await chrome.storage.local.get(STORAGE_KEYS.sessao);
+    const sessao = storage[STORAGE_KEYS.sessao];
+
+    if (sessao?.is_admin !== true) return false;
+
+    return Boolean(
+        pendente.autoConfirmarCte ||
+        pendente.servico?.autoConfirmarCte
+    );
+}
+
+async function aguardarBotaoSalvarEmitirCte(timeout) {
+    const inicio = Date.now();
+
+    await esperarDocumentoPronto();
+    await sleep(150);
+
+    while (Date.now() - inicio < timeout) {
+        const botao = encontrarBotaoSalvarEmitirCte();
+
+        if (botao) return botao;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+function encontrarBotaoSalvarEmitirCte() {
+    const porTesteId = document.querySelector("[data-testid='/cte--modal-Adicione mais informações ao CTe--button-salvarEmitir']");
+
+    if (porTesteId && isVisivel(porTesteId) && !porTesteId.disabled) {
+        return porTesteId;
+    }
+
+    return encontrarBotaoPorTextos(["SALVAR E EMITIR"]);
+}
+
+async function aguardarBotaoCalculadoraFrete(timeout) {
+    const inicio = Date.now();
+
+    await esperarDocumentoPronto();
+    await sleep(150);
+
+    while (Date.now() - inicio < timeout) {
+        const botao = encontrarBotaoCalculadoraFrete();
+
+        if (botao) return botao;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+function encontrarBotaoCalculadoraFrete() {
+    const botoesPorIcone = Array.from(document.querySelectorAll(
+        "svg[data-icon-name='line-calculator-solid'], svg[data-icon-name*='calculator']"
+    ))
+        .map((icone) => icone.closest("button, [role='button'], .MuiButtonBase-root"))
+        .filter(Boolean)
+        .filter(isVisivel)
+        .filter((elemento) => !elemento.disabled && elemento.getAttribute("aria-disabled") !== "true");
+
+    if (botoesPorIcone.length) return botoesPorIcone[0];
+
+    const botoes = Array.from(document.querySelectorAll([
+        "button:has(svg[data-icon-name='line-calculator-solid'])",
+        "button.MuiButton-neutralPrimary",
+        "button.MuiButtonBase-root",
+        "button"
+    ].join(",")))
+        .filter(isVisivel)
+        .filter((elemento) => !elemento.disabled);
+
+    return botoes.find((elemento) => elemento.querySelector("svg[data-icon-name*='calculator']")) || null;
+}
+
+async function preencherVeiculoTracaoCalculadora(pendente) {
+    const placa = obterPlaca(pendente);
+
+    if (!placa) {
+        console.warn("Placa nao encontrada nos dados para preencher Veiculo tracao.", pendente);
+        return false;
+    }
+
+    const input = await aguardarCampoPorRotulo("VEICULO TRACAO", "input[role='combobox'], input[placeholder*='Digite']", TIMEOUT_AUTOCOMPLETE_MS);
+
+    if (!input) {
+        console.warn("Campo Veiculo tracao nao encontrado na calculadora de frete.", {
+            pendente,
+            camposVisiveis: listarCamposVisiveis()
+        });
+        return false;
+    }
+
+    if (campoContemPlaca(input, placa)) return true;
+
+    await preencherInputBusca(input, placa);
+
+    const opcao = await aguardarOpcaoPorComparador(
+        (elemento) => textoContemPlaca(elemento.textContent, placa),
+        TIMEOUT_AUTOCOMPLETE_MS
+    );
+
+    if (!opcao) {
+        console.warn("Opcao da placa nao encontrada no autocomplete da calculadora de frete.", {
+            placa,
+            pendente,
+            valorCampo: obterTextoCampo(input),
+            opcoesVisiveis: listarOpcoesAutocomplete()
+        });
+        return false;
+    }
+
+    await clicarElemento(opcao);
+
+    if (!await aguardarCampoComPlaca(input, placa, TIMEOUT_CTE_MS)) {
+        console.warn("Veiculo tracao nao ficou com a placa correta apos selecao.", {
+            placa,
+            valorCampo: obterTextoCampo(input),
+            camposVisiveis: listarCamposVisiveis()
+        });
+        return false;
+    }
+
+    return true;
+}
+
+async function selecionarOpcaoSelectPorRotulo(rotulo, opcaoTexto, indiceFallback = null) {
+    const modal = obterModalCalculadoraFrete();
+    const compararOpcao = criarComparadorTextoOpcao(opcaoTexto);
+    const campo = await aguardarSelectCalculadora(rotulo, opcaoTexto, indiceFallback, TIMEOUT_AUTOCOMPLETE_MS, modal);
+
+    if (!campo) return false;
+
+    if (compararOpcao(campo)) {
+        console.log("Select da calculadora ja estava preenchido.", {
+            rotulo,
+            valor: textoLimpo(campo.textContent || campo.value)
+        });
+        return true;
+    }
+
+    await clicarSelectMui(campo);
+
+    const opcao = await aguardarOpcaoPorComparador(
+        compararOpcao,
+        TIMEOUT_AUTOCOMPLETE_MS
+    );
+
+    if (!opcao) return false;
+
+    await clicarElemento(opcao);
+    await sleep(PAUSA_POS_CLIQUE_MS);
+
+    return await aguardarSelectComTexto(rotulo, opcaoTexto, indiceFallback, TIMEOUT_CTE_MS) ||
+        compararOpcao(opcao);
+}
+
+async function clicarSelectMui(campo) {
+    campo.scrollIntoView?.({
+        behavior: "instant",
+        block: "center"
+    });
+    await sleep(120);
+    campo.focus?.();
+    ["mousedown", "mouseup", "click"].forEach((tipo) => {
+        campo.dispatchEvent(new MouseEvent(tipo, {
+            bubbles: true,
+            cancelable: true,
+            view: window
+        }));
+    });
+}
+
+async function aguardarSelectCalculadora(rotulo, opcaoTexto, indiceFallback, timeout, escopo = document) {
+    const inicio = Date.now();
+
+    await esperarDocumentoPronto();
+    await sleep(150);
+
+    while (Date.now() - inicio < timeout) {
+        const campo = encontrarSelectCalculadoraEspecifico(rotulo, opcaoTexto) ||
+            encontrarCampoPorRotulo(rotulo, ".MuiSelect-select, div[role='combobox']", escopo || document) ||
+            encontrarSelectCalculadoraPorIndice(indiceFallback);
+
+        if (campo) return campo;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+function encontrarSelectCalculadoraEspecifico(rotulo, opcaoTexto) {
+    const modal = obterModalCalculadoraFrete();
+
+    if (!modal) return null;
+
+    const selects = obterSelectsCalculadora(modal);
+    const rotuloNormalizado = normalizar(rotulo);
+    const compararOpcao = criarComparadorTextoOpcao(opcaoTexto);
+
+    if (rotuloNormalizado.includes("CONTRATADO")) {
+        return selects.find(compararOpcao) ||
+            selects.find((select) => normalizar(select.textContent).includes("COMPOSICAO")) ||
+            selects[0] ||
+            null;
+    }
+
+    if (rotuloNormalizado.includes("TIPO DE CARGA")) {
+        return selects.find(compararOpcao) ||
+            selects.find((select) => normalizar(select.textContent).includes("GRANEL")) ||
+            selects[1] ||
+            null;
+    }
+
+    return null;
+}
+
+async function aguardarSelectComTexto(rotulo, textoEsperado, indiceFallback, timeout) {
+    const inicio = Date.now();
+
+    while (Date.now() - inicio < timeout) {
+        const modal = obterModalCalculadoraFrete();
+        const campo = encontrarSelectCalculadoraEspecifico(rotulo, textoEsperado) ||
+            encontrarCampoPorRotulo(rotulo, ".MuiSelect-select, div[role='combobox']", modal || document) ||
+            encontrarSelectCalculadoraPorIndice(indiceFallback);
+
+        if (campo && criarComparadorTextoOpcao(textoEsperado)(campo)) return true;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return false;
+}
+
+function encontrarSelectCalculadoraPorIndice(indice) {
+    if (!Number.isInteger(indice)) return null;
+
+    const modal = obterModalCalculadoraFrete();
+
+    if (!modal) return null;
+
+    return obterSelectsCalculadora(modal)[indice] || null;
+}
+
+function obterSelectsCalculadora(modal) {
+    return Array.from(modal.querySelectorAll(".MuiSelect-select, div[role='combobox']"))
+        .filter(isVisivel)
+        .filter((elemento) => elemento.tagName !== "INPUT")
+        .filter((elemento) => !elemento.disabled);
+}
+
+async function marcarCheckboxCalculadora(rotulo) {
+    const checkbox = await aguardarCheckboxCalculadora(rotulo, TIMEOUT_CTE_MS);
+
+    if (!checkbox) return false;
+
+    if (checkbox.checked) return true;
+
+    await clicarCheckbox(checkbox);
+    return aguardarCheckboxMarcado(rotulo, TIMEOUT_CTE_MS);
+}
+
+async function aguardarCheckboxCalculadora(rotulo, timeout) {
+    const inicio = Date.now();
+
+    await esperarDocumentoPronto();
+    await sleep(150);
+
+    while (Date.now() - inicio < timeout) {
+        const checkbox = encontrarCheckboxCalculadora(rotulo);
+
+        if (checkbox) return checkbox;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+function encontrarCheckboxCalculadora(rotulo) {
+    const modal = obterModalCalculadoraFrete();
+
+    if (!modal) return null;
+
+    const rotuloBusca = normalizarCompacto(rotulo);
+
+    const elementoRotulo = Array.from(modal.querySelectorAll("label, span, div"))
+        .filter(isVisivel)
+        .filter((elemento) => normalizarCompacto(elemento.textContent).includes(rotuloBusca))
+        .sort((a, b) => textoLimpo(a.textContent).length - textoLimpo(b.textContent).length)[0];
+
+    if (!elementoRotulo) return null;
+
+    const label = elementoRotulo.closest("label");
+    const checkboxNoLabel = label?.querySelector("input[type='checkbox']");
+
+    if (checkboxNoLabel) return checkboxNoLabel;
+
+    return encontrarCheckboxProximoAoRotulo(modal, elementoRotulo);
+}
+
+async function clicarCheckbox(checkbox) {
+    const alvo = checkbox.closest(".MuiCheckbox-root, .PrivateSwitchBase-root") ||
+        checkbox.closest("label") ||
+        checkbox;
+
+    alvo.scrollIntoView?.({
+        behavior: "instant",
+        block: "center"
+    });
+    await sleep(120);
+    ["mousedown", "mouseup", "click"].forEach((tipo) => {
+        alvo.dispatchEvent(new MouseEvent(tipo, {
+            bubbles: true,
+            cancelable: true,
+            view: window
+        }));
+    });
+
+    if (!checkbox.checked) {
+        checkbox.click();
+        checkbox.dispatchEvent(new Event("change", {
+            bubbles: true
+        }));
+    }
+}
+
+function encontrarCheckboxProximoAoRotulo(modal, elementoRotulo) {
+    const rectRotulo = elementoRotulo.getBoundingClientRect();
+
+    return Array.from(modal.querySelectorAll("input[type='checkbox']"))
+        .map((checkbox) => ({
+            checkbox,
+            rect: checkbox.getBoundingClientRect()
+        }))
+        .filter((item) =>
+            Math.abs(item.rect.top - rectRotulo.top) <= 30 ||
+            Math.abs((item.rect.top + item.rect.height / 2) - (rectRotulo.top + rectRotulo.height / 2)) <= 30
+        )
+        .sort((a, b) => Math.abs(a.rect.left - rectRotulo.left) - Math.abs(b.rect.left - rectRotulo.left))[0]?.checkbox || null;
+}
+
+async function aguardarCheckboxMarcado(rotulo, timeout) {
+    const inicio = Date.now();
+
+    while (Date.now() - inicio < timeout) {
+        const checkbox = encontrarCheckboxCalculadora(rotulo);
+
+        if (checkbox && (checkbox.checked || checkbox.getAttribute("value") === "true")) return true;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return false;
+}
+
+async function clicarCalcularFrete() {
+    const botao = await aguardarBotaoCalcularFrete(TIMEOUT_CTE_MS);
+
+    if (!botao) return false;
+
+    await clicarElemento(botao);
+    return true;
+}
+
+async function aguardarBotaoCalcularFrete(timeout) {
+    const inicio = Date.now();
+
+    await esperarDocumentoPronto();
+    await sleep(150);
+
+    while (Date.now() - inicio < timeout) {
+        const botao = encontrarBotaoCalcularFrete();
+
+        if (botao) return botao;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+function encontrarBotaoCalcularFrete() {
+    const modal = obterModalCalculadoraFrete();
+
+    if (!modal) return null;
+
+    return Array.from(modal.querySelectorAll("button.line-button-contained, button[type='submit'], button"))
+        .filter(isVisivel)
+        .filter((botao) => !botao.disabled)
+        .find((botao) => normalizar(botao.textContent).includes("CALCULAR")) || null;
+}
+
+async function clicarConfirmarFreteCalculado() {
+    const botao = await aguardarBotaoConfirmarFrete(TIMEOUT_AUTOCOMPLETE_MS);
+
+    if (!botao) return false;
+
+    await clicarElemento(botao);
+    await sleep(PAUSA_POS_CLIQUE_MS);
+    return true;
+}
+
+async function aguardarBotaoConfirmarFrete(timeout) {
+    const inicio = Date.now();
+
+    await esperarDocumentoPronto();
+    await sleep(150);
+
+    while (Date.now() - inicio < timeout) {
+        const botao = encontrarBotaoConfirmarFrete();
+
+        if (botao) return botao;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+function encontrarBotaoConfirmarFrete() {
+    const modal = obterModalCalculadoraFrete() || document;
+
+    return Array.from(modal.querySelectorAll("button.line-button-contained, button[type='button'], button"))
+        .filter(isVisivel)
+        .filter((botao) => !botao.disabled)
+        .find((botao) => normalizar(botao.textContent).includes("CONFIRMAR")) || null;
+}
+
+async function clicarInformacoesAdicionais() {
+    const botao = await aguardarBotaoInformacoesAdicionais(TIMEOUT_AUTOCOMPLETE_MS);
+
+    if (!botao) return false;
+
+    await clicarElemento(botao);
+    await sleep(PAUSA_POS_CLIQUE_MS);
+    return true;
+}
+
+async function aguardarBotaoInformacoesAdicionais(timeout) {
+    const inicio = Date.now();
+
+    await esperarDocumentoPronto();
+    await sleep(150);
+
+    while (Date.now() - inicio < timeout) {
+        const botao = encontrarBotaoInformacoesAdicionais();
+
+        if (botao) return botao;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+function encontrarBotaoInformacoesAdicionais() {
+    const porTesteId = document.querySelector("[data-testid='/cte--modal-Confira os dados do CTe--button-maisOpcoes']");
+
+    if (porTesteId && isVisivel(porTesteId) && !porTesteId.disabled) {
+        return porTesteId;
+    }
+
+    return encontrarBotaoPorTextos(["INFORMACOES ADICIONAIS"]);
+}
+
+async function preencherObservacaoGeralComKm(pendente, distancia) {
+    const textarea = await aguardarTextareaObservacaoGeral(TIMEOUT_AUTOCOMPLETE_MS);
+
+    if (!textarea) {
+        console.warn("Campo de observacoes gerais nao encontrado em Informacoes adicionais.", {
+            pendente,
+            camposVisiveis: listarCamposVisiveis()
+        });
+        return false;
+    }
+
+    const km = Number.isFinite(distancia) ? distancia : obterDistanciaPagamento(pendente);
+
+    if (!Number.isFinite(km) || km <= 0) {
+        console.warn("Distancia de frete nao encontrada para preencher observacoes gerais.", pendente);
+        return false;
+    }
+
+    const sufixo = `-- ${formatarDistanciaCalculadora(km)} km`;
+    const valorAtual = textoLimpo(textarea.value || "");
+    let valorBase = valorAtual;
+
+    if (servicoEhPluma(pendente)) {
+        const placa = normalizarPlaca(obterPlaca(pendente));
+
+        if (!placa) {
+            console.warn("Placa nao encontrada para preencher as observacoes do CTE da PLUMA.", pendente);
+            return false;
+        }
+
+        if (!normalizarPlaca(valorBase).includes(placa)) {
+            valorBase = `${placa}${valorBase ? ` ${valorBase}` : ""}`;
+        }
+    }
+
+    const valorNormalizado = normalizar(valorBase);
+    const sufixoNormalizado = normalizar(sufixo);
+    const novoValor = valorNormalizado.includes(sufixoNormalizado) ?
+        valorBase :
+        `${valorBase}${valorBase ? " " : ""}${sufixo}`;
+
+    await preencherTextarea(textarea, novoValor);
+    return true;
+}
+
+function servicoEhPluma(pendente) {
+    const servico = pendente?.servico || {};
+    const grupo = obterGrupoCteAtual(pendente);
+    const textosEmpresa = [
+        pendente?.pedagio?.empresa,
+        servico?.resumo?.emitente,
+        servico?.emitente,
+        grupo?.emitente,
+        ...(Array.isArray(servico?.nfs) ? servico.nfs.map((nf) => nf?.emitente) : [])
+    ];
+
+    return textosEmpresa.some((texto) => normalizar(texto).includes("PLUMA"));
+}
+
+async function aguardarTextareaObservacaoGeral(timeout) {
+    const inicio = Date.now();
+
+    await esperarDocumentoPronto();
+    await sleep(150);
+
+    while (Date.now() - inicio < timeout) {
+        const textarea =
+            document.querySelector("textarea[name='compl_obs_gerais']") ||
+            Array.from(document.querySelectorAll("textarea"))
+                .filter(isVisivel)
+                .find((campo) => !campo.disabled && !campo.readOnly);
+
+        if (textarea && isVisivel(textarea) && !textarea.disabled && !textarea.readOnly) return textarea;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+async function preencherTextarea(textarea, texto) {
+    textarea.scrollIntoView?.({
+        behavior: "instant",
+        block: "center"
+    });
+    await sleep(120);
+    textarea.focus?.();
+    setValorNativo(textarea, texto);
+    textarea.dispatchEvent(new InputEvent("input", {
+        bubbles: true,
+        inputType: "insertText",
+        data: texto
+    }));
+    dispararEventos(textarea, ["change"]);
+    await sleep(150);
+    textarea.blur?.();
+    dispararEventos(textarea, ["blur"]);
+}
+
+async function preencherDistanciaCalculadora(pendente) {
+    const distancia = obterDistanciaPagamento(pendente);
+
+    if (!Number.isFinite(distancia) || distancia <= 0) {
+        await chrome.storage.local.set({
+            [STORAGE_KEYS.simplesCtePendente]: {
+                ...pendente,
+                etapa: "calculadora_frete_erro_km",
+                atualizadoEm: Date.now(),
+                erroFrete: true,
+                erroKm: "Distancia de pagamento nao encontrada"
+            }
+        });
+
+        console.warn("Distancia de pagamento nao encontrada para preencher calculadora de frete.", pendente);
+        return false;
+    }
+
+    const input = await aguardarCampoDistanciaCalculadora(TIMEOUT_AUTOCOMPLETE_MS);
+
+    if (!input) {
+        console.warn("Campo Distancia nao encontrado na calculadora de frete.", {
+            pendente,
+            camposVisiveis: listarCamposVisiveis()
+        });
+        return false;
+    }
+
+    const valor = formatarDistanciaCalculadora(distancia);
+
+    await preencherInputTexto(input, valor);
+
+    if (!await aguardarValorInput(input, valor, TIMEOUT_CTE_MS)) {
+        console.warn("Distancia nao ficou preenchida na calculadora de frete.", {
+            distancia: valor,
+            valorCampo: textoLimpo(input.value),
+            pendente,
+            camposVisiveis: listarCamposVisiveis()
+        });
+        return false;
+    }
+
+    return true;
+}
+
+async function aguardarCampoDistanciaCalculadora(timeout) {
+    const inicio = Date.now();
+
+    await esperarDocumentoPronto();
+    await sleep(150);
+
+    while (Date.now() - inicio < timeout) {
+        const input = encontrarCampoDistanciaCalculadora();
+
+        if (input) return input;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+function encontrarCampoDistanciaCalculadora() {
+    const modal = obterModalCalculadoraFrete();
+
+    return encontrarCampoPorRotulo("DISTANCIA KM", "input", modal) ||
+        encontrarCampoPorRotulo("DISTANCIA", "input", modal) ||
+        encontrarInputNumericoCalculadora();
+}
+
+function encontrarInputNumericoCalculadora() {
+    const modal = obterModalCalculadoraFrete();
+    const textoTela = normalizar(modal?.innerText || document.body?.innerText || "");
+
+    if (!textoTela.includes("CALCULADORA DE FRETE")) return null;
+
+    return Array.from((modal || document).querySelectorAll("input[type='text'], input:not([type])"))
+        .filter(isVisivel)
+        .filter((input) => !input.disabled && !input.readOnly)
+        .filter((input) => input.getAttribute("role") !== "combobox")
+        .filter((input) => !campoEhBuscaGlobalOuCfop(input))
+        .filter((input) => {
+            const texto = normalizar([
+                input.name,
+                input.id,
+                input.placeholder,
+                input.getAttribute("aria-label")
+            ].filter(Boolean).join(" "));
+
+            return !texto.includes("DIGITE PARA BUSCAR") &&
+                !texto.includes("CHAVE") &&
+                !texto.includes("PLACA") &&
+                !texto.includes("VEICULO");
+        })
+        .sort((a, b) => {
+            const valorA = textoLimpo(a.value);
+            const valorB = textoLimpo(b.value);
+
+            if (/^\d+([,.]\d+)?$/.test(valorA) && !/^\d+([,.]\d+)?$/.test(valorB)) return -1;
+            if (!/^\d+([,.]\d+)?$/.test(valorA) && /^\d+([,.]\d+)?$/.test(valorB)) return 1;
+
+            return a.getBoundingClientRect().top - b.getBoundingClientRect().top;
+        })[0] || null;
+}
+
+function obterModalCalculadoraFrete() {
+    return Array.from(document.querySelectorAll(".line-modal-dialog, [role='dialog'], form"))
+        .filter(isVisivel)
+        .find((elemento) => normalizar(elemento.textContent).includes("CALCULADORA DE FRETE")) || null;
+}
+
+async function aguardarCampoPorRotulo(rotulo, seletorCampo, timeout, escopo = document) {
+    const inicio = Date.now();
+
+    await esperarDocumentoPronto();
+    await sleep(150);
+
+    while (Date.now() - inicio < timeout) {
+        const campo = encontrarCampoPorRotulo(rotulo, seletorCampo, escopo || document);
+
+        if (campo) return campo;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+function encontrarCampoPorRotulo(rotulo, seletorCampo, escopo = document) {
+    const raiz = escopo || document;
+    const rotuloBusca = normalizar(rotulo);
+    const rotuloBuscaCompacto = normalizarCompacto(rotulo);
+    const rotulos = Array.from(raiz.querySelectorAll("label, span, p, div"))
+        .filter(isVisivel)
+        .map((elemento) => ({
+            elemento,
+            texto: normalizar(elemento.textContent),
+            textoCompacto: normalizarCompacto(elemento.textContent),
+            tamanho: textoLimpo(elemento.textContent).length
+        }))
+        .filter((item) =>
+            item.texto.includes(rotuloBusca) ||
+            item.textoCompacto.includes(rotuloBuscaCompacto)
+        )
+        .sort((a, b) => a.tamanho - b.tamanho);
+
+    for (const item of rotulos) {
+        const campo = encontrarCampoAbaixoDoRotulo(item.elemento, seletorCampo, raiz);
+
+        if (campo) return campo;
+    }
+
+    return null;
+}
+
+function encontrarCampoAbaixoDoRotulo(rotulo, seletorCampo, escopo = document) {
+    const rectRotulo = rotulo.getBoundingClientRect();
+
+    return Array.from(escopo.querySelectorAll(seletorCampo))
+        .filter(isVisivel)
+        .filter((campo) => !campo.disabled && !campo.readOnly)
+        .map((campo) => ({
+            campo,
+            rect: campo.getBoundingClientRect()
+        }))
+        .filter((item) =>
+            item.rect.top >= rectRotulo.top &&
+            item.rect.top <= rectRotulo.bottom + 130 &&
+            retangulosSobrepoemHorizontalmente(rectRotulo, item.rect)
+        )
+        .sort((a, b) => (a.rect.top - b.rect.top) || (a.rect.left - b.rect.left))[0]?.campo || null;
+}
+
+async function aguardarOpcaoPorComparador(comparar, timeout) {
+    const inicio = Date.now();
+
+    while (Date.now() - inicio < timeout) {
+        const opcao = encontrarOpcaoPorComparador(comparar);
+
+        if (opcao) return opcao;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+async function aguardarTextoCampo(campo, textoEsperado, timeout) {
+    const inicio = Date.now();
+
+    while (Date.now() - inicio < timeout) {
+        if (textoEquivalente(campo.textContent || campo.value, textoEsperado)) return true;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return false;
+}
+
+function encontrarOpcaoPorComparador(comparar) {
+    const candidatos = Array.from(document.querySelectorAll([
+        "[role='option']",
+        "[role='listbox'] *",
+        "li",
+        ".MuiAutocomplete-option",
+        ".MuiMenuItem-root",
+        ".MuiListItem-root",
+        ".MuiPaper-root *",
+        "[class*='option']",
+        "[class*='Option']",
+        "[class*='menu']",
+        "[class*='Menu']"
+    ].join(",")))
+        .filter(isVisivel)
+        .filter(comparar)
+        .sort((a, b) => textoLimpo(a.textContent).length - textoLimpo(b.textContent).length);
+
+    return candidatos[0] || null;
+}
+
+function textoEquivalente(texto, esperado) {
+    const textoNormalizado = normalizarCompacto(texto);
+    const esperadoNormalizado = normalizarCompacto(esperado);
+
+    return Boolean(textoNormalizado && esperadoNormalizado) &&
+        (textoNormalizado.includes(esperadoNormalizado) || esperadoNormalizado.includes(textoNormalizado));
+}
+
+function criarComparadorTextoOpcao(esperado) {
+    const esperadoNormalizado = normalizar(esperado);
+    const palavrasEssenciais = esperadoNormalizado
+        .split(/\s+/)
+        .map((palavra) => palavra.replace(/[^A-Z0-9]/g, ""))
+        .filter((palavra) => palavra.length > 2);
+
+    return (elementoOuTexto) => {
+        const texto = typeof elementoOuTexto === "string"
+            ? elementoOuTexto
+            : elementoOuTexto?.textContent || elementoOuTexto?.value || "";
+        const textoNormalizado = normalizar(texto);
+        const textoCompacto = normalizarCompacto(texto);
+
+        if (textoEquivalente(texto, esperado)) return true;
+
+        return palavrasEssenciais.every((palavra) => textoCompacto.includes(palavra));
+    };
+}
+
+function normalizarCompacto(valor) {
+    return normalizar(valor).replace(/[^A-Z0-9]/g, "");
+}
+
+async function aguardarCampoComPlaca(campo, placa, timeout) {
+    const inicio = Date.now();
+
+    while (Date.now() - inicio < timeout) {
+        if (campoContemPlaca(campo, placa)) return true;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return false;
+}
+
+function campoContemPlaca(campo, placa) {
+    return textoContemPlaca(obterTextoCampo(campo), placa);
+}
+
+function textoContemPlaca(texto, placa) {
+    const textoPlaca = normalizarPlaca(texto);
+    const placaBusca = normalizarPlaca(placa);
+
+    return Boolean(placaBusca && textoPlaca.includes(placaBusca));
+}
+
+function normalizarPlaca(valor) {
+    return String(valor || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+function obterPlaca(pendente) {
+    return pendente.placa ||
+        pendente.caminhao?.placa ||
+        pendente.servico?.codigo ||
+        pendente.servico?.caminhao?.placa ||
+        "";
+}
+
+function obterDistanciaPagamento(pendente) {
+    const distancia =
+        pendente.servico?.destinoPedagio?.distancia ??
+        pendente.servico?.produtorKm?.distancia ??
+        pendente.servico?.produtorKm?.distanciaPagamento ??
+        pendente.servico?.distanciaPagamento ??
+        pendente.servico?.kmPagamento ??
+        pendente.servico?.resumo?.distanciaPagamento ??
+        pendente.servico?.resumo?.kmPagamento;
+
+    const numero = Number(String(distancia ?? "").replace(",", "."));
+
+    return Number.isFinite(numero) ? numero : null;
+}
+
+async function obterPendente() {
+    const storage = await chrome.storage.local.get(STORAGE_KEYS.simplesCtePendente);
+    const pendente = storage[STORAGE_KEYS.simplesCtePendente];
+
+    if (!pendente) return null;
+
+    if (Date.now() - pendente.criadoEm > TEMPO_MAX_CTE_MS) {
+        await chrome.storage.local.remove(STORAGE_KEYS.simplesCtePendente);
+        return null;
+    }
+
+    return pendente;
+}
+
+async function aguardarElementoPorTexto(texto, timeout) {
+    const inicio = Date.now();
+
+    while (Date.now() - inicio < timeout) {
+        const elemento = encontrarElementoPorTexto(texto);
+
+        if (elemento) return elemento;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+async function aguardarElementoPorSeletor(seletor, timeout) {
+    const inicio = Date.now();
+
+    await esperarDocumentoPronto();
+    await sleep(150);
+
+    while (Date.now() - inicio < timeout) {
+        const elemento = document.querySelector(seletor);
+
+        if (elemento && isVisivel(elemento) && !elemento.disabled) return elemento;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+async function aguardarTextoNaTela(texto, timeout) {
+    const inicio = Date.now();
+    const textoBusca = normalizar(texto);
+
+    while (Date.now() - inicio < timeout) {
+        if (normalizar(document.body?.innerText || "").includes(textoBusca)) {
+            return true;
+        }
+
+        await sleep(500);
+    }
+
+    return false;
+}
+
+function encontrarElementoPorTexto(texto) {
+    const textoBusca = normalizar(texto);
+    const palavras = textoBusca.split(/\s+/).filter(Boolean);
+    const candidatos = Array.from(document.querySelectorAll([
+        "button",
+        "a",
+        "[role='button']",
+        "[role='link']",
+        "li",
+        "td",
+        "span",
+        "div",
+        ".MuiTypography-root",
+        ".MuiAvatar-root",
+        ".card",
+        ".empresa",
+        ".company",
+        "[class*='Mui']",
+        "[class*='card']",
+        "[class*='empresa']",
+        "[class*='company']"
+    ].join(",")));
+
+    const encontrado = candidatos
+        .filter(isVisivel)
+        .map((elemento) => ({
+            elemento,
+            texto: normalizar(elemento.textContent),
+            tamanho: textoLimpo(elemento.textContent).length
+        }))
+        .filter((item) =>
+            item.texto.includes(textoBusca) ||
+            palavras.every((palavra) => item.texto.includes(palavra))
+        )
+        .sort((a, b) => a.tamanho - b.tamanho)[0]?.elemento || null;
+
+    return encontrado ? resolverElementoClicavel(encontrado) : null;
+}
+
+async function aguardarBotaoPorTextos(textos, timeout) {
+    const inicio = Date.now();
+
+    await esperarDocumentoPronto();
+    await sleep(150);
+
+    while (Date.now() - inicio < timeout) {
+        const botao = encontrarBotaoPorTextos(textos);
+
+        if (botao) return botao;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+async function aguardarTextareaChaves(timeout) {
+    const inicio = Date.now();
+
+    await esperarDocumentoPronto();
+    await sleep(150);
+
+    while (Date.now() - inicio < timeout) {
+        const textarea =
+            document.querySelector("textarea[name='chaves_acesso_csv']") ||
+            document.querySelector("textarea[placeholder*='5500']");
+
+        if (textarea && isVisivel(textarea)) return textarea;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+async function aguardarInputBuscaProdutor(timeout) {
+    const inicio = Date.now();
+
+    await esperarDocumentoPronto();
+    await sleep(150);
+
+    while (Date.now() - inicio < timeout) {
+        const inputs = Array.from(document.querySelectorAll([
+            "input[placeholder*='Digite para buscar']",
+            ".input-container input[type='text']",
+            "input[autocomplete='disabled']"
+        ].join(",")))
+            .filter(isVisivel)
+            .filter((input) => !input.disabled && !input.readOnly)
+            .filter(inputEhCampoBuscaProdutor);
+
+        if (inputs.length) return inputs[0];
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+async function aguardarCampoTomador(timeout) {
+    const inicio = Date.now();
+
+    await esperarDocumentoPronto();
+    await sleep(150);
+
+    while (Date.now() - inicio < timeout) {
+        const campo = encontrarCampoTomador();
+
+        if (campo) return campo;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+function encontrarCampoTomador() {
+    const campoAssociadoAoRotulo = encontrarCampoTomadorPorRotulo();
+
+    if (campoAssociadoAoRotulo) return campoAssociadoAoRotulo;
+
+    const campos = obterCamposPossiveisTomador();
+    const campoPorPlaceholder = campos.find(campoTemTextoTomador);
+
+    if (campoPorPlaceholder) return resolverElementoClicavel(campoPorPlaceholder);
+
+    const rotulo = Array.from(document.querySelectorAll("label, span, p, div"))
+        .filter(isVisivel)
+        .map((elemento) => ({
+            elemento,
+            texto: normalizar(elemento.textContent),
+            tamanho: textoLimpo(elemento.textContent).length
+        }))
+        .filter((item) =>
+            item.texto.includes("TOMADOR") ||
+            item.texto.includes("QUEM PAGARA A SUA EMPRESA PELO FRETE") ||
+            item.texto.includes("QUEM VAI PAGAR O FRETE")
+        )
+        .sort((a, b) => a.tamanho - b.tamanho)[0]?.elemento;
+
+    if (!rotulo) return null;
+
+    const rectRotulo = rotulo.getBoundingClientRect();
+
+    return campos
+        .map((campo) => ({
+            campo,
+            rect: campo.getBoundingClientRect()
+        }))
+        .filter((item) =>
+            item.rect.top >= rectRotulo.top &&
+            item.rect.top <= rectRotulo.bottom + 130 &&
+            retangulosSobrepoemHorizontalmente(rectRotulo, item.rect)
+        )
+        .sort((a, b) => (a.rect.top - b.rect.top) || (a.rect.left - b.rect.left))[0]?.campo || null;
+}
+
+function encontrarCampoTomadorPorRotulo() {
+    const rotulos = Array.from(document.querySelectorAll("label"));
+    const rotulo = rotulos.find((elemento) => {
+        const destino = normalizar(elemento.getAttribute("for") || "");
+        const texto = normalizar(elemento.textContent || "");
+
+        return destino.includes("ENVOLVIDOS TIPO TOMADOR") ||
+            texto.includes("TOMADOR") ||
+            texto.includes("QUEM PAGARA A SUA EMPRESA PELO FRETE");
+    });
+
+    if (!rotulo) return null;
+
+    const idCampo = rotulo.getAttribute("for");
+    const campoPorId = idCampo ? document.getElementById(idCampo) : null;
+
+    if (campoPorId && isVisivel(campoPorId)) return campoPorId;
+
+    const bloco = rotulo.closest(".line-grid") || rotulo.parentElement?.parentElement;
+    const input = bloco?.querySelector("input[type='text'], input:not([type]), [role='combobox']");
+
+    return input && isVisivel(input) ? input : null;
+}
+
+function encontrarCampoDestinatario() {
+    const rotulos = Array.from(document.querySelectorAll(
+        "label, .MuiFormLabel-root, .MuiTypography-root, span"
+    ))
+        .filter(isVisivel)
+        .filter((elemento) => {
+            const texto = normalizar(elemento.textContent || "");
+            return texto.includes("PARA QUEM VAI SER ENVIADA A MERCADORIA") ||
+                texto.includes("DESTINATARIO");
+        })
+        .sort((a, b) => textoLimpo(a.textContent).length - textoLimpo(b.textContent).length);
+    const rotulo = rotulos[0];
+
+    if (!rotulo) return null;
+
+    const idCampo = rotulo.getAttribute("for");
+    const campoPorId = idCampo ? document.getElementById(idCampo) : null;
+
+    if (campoPorId && isVisivel(campoPorId)) return campoPorId;
+
+    let bloco = rotulo;
+
+    for (let nivel = 0; nivel < 5 && bloco; nivel += 1, bloco = bloco.parentElement) {
+        const campo = bloco.querySelector?.(
+            "input:not([type='hidden']), [role='combobox'], [aria-haspopup='listbox'], .MuiSelect-select"
+        );
+
+        if (campo && isVisivel(campo)) return campo;
+    }
+
+    return null;
+}
+
+function destinatarioValido() {
+    const campo = encontrarCampoDestinatario();
+    const valor = obterTextoCampo(campo);
+    const nomesEsperados = window.__levoAutoNomesDestinatario || [];
+
+    return Boolean(campo && !tomadorInvalido(normalizar(valor))) &&
+        (!nomesEsperados.length || nomesEsperados.some((nome) =>
+            destinatarioCorrespondeNome(valor, nome)
+        ));
+}
+
+function campoTemTextoTomador(campo) {
+    const input = campo.matches?.("input") ? campo : campo.querySelector?.("input");
+    const texto = normalizar([
+        input?.placeholder,
+        campo.placeholder,
+        input?.getAttribute("aria-label"),
+        campo.getAttribute("aria-label"),
+        input?.closest("label")?.textContent,
+        campo.closest("label")?.textContent
+    ].filter(Boolean).join(" "));
+
+    return texto.includes("QUEM VAI PAGAR O FRETE") ||
+        texto.includes("QUEM VAI PAGAR") ||
+        texto.includes("TOMADOR");
+}
+
+function retangulosSobrepoemHorizontalmente(a, b) {
+    return b.left <= a.right + 40 && b.right >= a.left - 40;
+}
+
+function obterCamposPossiveisTomador() {
+    const candidatos = Array.from(document.querySelectorAll([
+        "input",
+        "button",
+        "[role='combobox']",
+        "[aria-haspopup='listbox']",
+        ".MuiSelect-select",
+        ".MuiInputBase-root"
+    ].join(",")))
+        .filter(isVisivel)
+        .filter((campo) => !campo.disabled && !campo.readOnly)
+        .filter((campo) => !campoEhBuscaGlobalOuCfop(campo));
+
+    return candidatos
+        .map((campo) => campo.matches?.("input") ? campo : resolverElementoClicavel(campo))
+        .filter((campo, indice, lista) => lista.indexOf(campo) === indice);
+}
+
+function campoEhBuscaGlobalOuCfop(campo) {
+    const texto = normalizar([
+        campo.name,
+        campo.id,
+        campo.placeholder,
+        campo.getAttribute("aria-label"),
+        campo.closest("label")?.textContent
+    ].filter(Boolean).join(" "));
+
+    if (texto.includes("PESQUISAR")) return true;
+    if (texto.includes("CFOP")) return true;
+
+    const rectCampo = campo.getBoundingClientRect();
+    const rotuloCfop = Array.from(document.querySelectorAll("label, span, p, div"))
+        .filter(isVisivel)
+        .find((elemento) => normalizar(elemento.textContent).startsWith("CFOP"));
+
+    if (!rotuloCfop) return false;
+
+    const rectCfop = rotuloCfop.getBoundingClientRect();
+
+    return rectCampo.top >= rectCfop.bottom - 8 &&
+        rectCampo.top <= rectCfop.bottom + 90;
+}
+
+async function preencherCampoTomador(campo, produtor) {
+    const input = campo.matches?.("input") ? campo : campo.querySelector?.("input");
+
+    if (input && !input.readOnly && !input.disabled) {
+        await preencherInputBusca(input, produtor);
+        return;
+    }
+
+    await clicarElemento(campo);
+    await sleep(PAUSA_POS_CLIQUE_MS);
+}
+
+function inputEhCampoBuscaProdutor(input) {
+    const nome = normalizar(input.name || "");
+    const id = normalizar(input.id || "");
+    const placeholder = normalizar(input.placeholder || "");
+    const contexto = normalizar(input.closest(".input-container, form, [role='dialog'], .MuiDialog-root")?.textContent || "");
+
+    if (
+        nome === "PESQUISAR" ||
+        id === "PESQUISAR" ||
+        placeholder === "PESQUISAR" ||
+        placeholder.includes("PESQUISAR")
+    ) {
+        return false;
+    }
+
+    if (placeholder.includes("DIGITE PARA BUSCAR")) return true;
+
+    return Boolean(input.closest(".input-container")) && (
+        contexto.includes("TOMADOR") ||
+        contexto.includes("REMETENTE") ||
+        contexto.includes("DESTINATARIO") ||
+        contexto.includes("EXPEDIDOR") ||
+        contexto.includes("RECEBEDOR")
+    );
+}
+
+async function preencherInputBusca(input, texto) {
+    input.scrollIntoView?.({
+        behavior: "instant",
+        block: "center"
+    });
+    await sleep(120);
+    input.focus?.();
+    setValorNativo(input, "");
+    dispararEventos(input);
+    await sleep(100);
+    setValorNativo(input, texto);
+    input.dispatchEvent(new KeyboardEvent("keydown", {
+        key: texto.slice(-1) || "a",
+        bubbles: true,
+        cancelable: true
+    }));
+    dispararEventos(input);
+    input.dispatchEvent(new KeyboardEvent("keyup", {
+        key: texto.slice(-1) || "a",
+        bubbles: true,
+        cancelable: true
+    }));
+    await sleep(900);
+}
+
+async function preencherInputTexto(input, texto) {
+    input.scrollIntoView?.({
+        behavior: "instant",
+        block: "center"
+    });
+    await sleep(120);
+    input.focus?.();
+    input.select?.();
+    setValorNativo(input, "");
+    dispararEventos(input);
+    await sleep(80);
+    setValorNativo(input, texto);
+    input.dispatchEvent(new InputEvent("input", {
+        bubbles: true,
+        inputType: "insertText",
+        data: texto
+    }));
+    dispararEventos(input, ["change"]);
+    await sleep(150);
+    input.blur?.();
+    dispararEventos(input, ["blur"]);
+}
+
+async function aguardarValorInput(input, valorEsperado, timeout) {
+    const inicio = Date.now();
+    const esperado = normalizarNumeroCampo(valorEsperado);
+
+    while (Date.now() - inicio < timeout) {
+        if (normalizarNumeroCampo(input.value) === esperado) return true;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return false;
+}
+
+function formatarDistanciaCalculadora(distancia) {
+    const numero = Number(distancia);
+
+    if (Number.isInteger(numero)) return String(numero);
+
+    return String(numero).replace(".", ",");
+}
+
+function normalizarNumeroCampo(valor) {
+    const texto = String(valor || "")
+        .replace(/\s+/g, "")
+        .replace(",", ".")
+        .replace(/\.0+$/, "");
+
+    const numero = Number(texto);
+
+    return Number.isFinite(numero) ? String(numero) : texto;
+}
+
+async function aguardarCampoTomadorValido(produtor, timeout) {
+    const inicio = Date.now();
+
+    while (Date.now() - inicio < timeout) {
+        const campo = encontrarCampoTomador();
+
+        if (campo && campoTomadorValido(campo, produtor)) return true;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return false;
+}
+
+function campoTomadorValido(campo, produtor) {
+    const valor = obterTextoCampo(campo);
+
+    if (!valor) return false;
+
+    const valorNormalizado = normalizar(valor);
+    const produtorNormalizado = normalizar(produtor);
+
+    if (tomadorInvalido(valorNormalizado)) return false;
+
+    return valorNormalizado.includes(produtorNormalizado) ||
+        produtorNormalizado.includes(valorNormalizado) ||
+        compararPalavrasPrincipais(valorNormalizado, produtorNormalizado);
+}
+
+function obterTextoCampo(campo) {
+    const input = campo.matches?.("input") ? campo : campo.querySelector?.("input");
+    const valorDireto = textoLimpo(input?.value || campo.value || campo.textContent || "");
+
+    if (valorDireto) return valorDireto;
+
+    const placeholder = textoLimpo(input?.placeholder || campo.placeholder || "");
+
+    return placeholderEhValorSelecionado(placeholder) ? placeholder : "";
+}
+
+function placeholderEhValorSelecionado(placeholder) {
+    const texto = normalizar(placeholder);
+
+    if (!texto) return false;
+
+    return !texto.includes("QUEM VAI PAGAR") &&
+        !texto.includes("DIGITE PARA BUSCAR") &&
+        !texto.includes("PESQUISAR") &&
+        !tomadorInvalido(texto);
+}
+
+function tomadorInvalido(valorNormalizado) {
+    return !valorNormalizado ||
+        valorNormalizado === "DIVERSOS" ||
+        valorNormalizado.includes("DIVERSOS");
+}
+
+function compararPalavrasPrincipais(valorNormalizado, produtorNormalizado) {
+    const palavrasValor = valorNormalizado.split(/\s+/).filter((palavra) => palavra.length > 2);
+    const palavrasProdutor = produtorNormalizado.split(/\s+/).filter((palavra) => palavra.length > 2);
+
+    if (!palavrasValor.length || !palavrasProdutor.length) return false;
+
+    const palavrasIguais = palavrasValor.filter((palavra) => palavrasProdutor.includes(palavra));
+    const minimo = Math.min(2, palavrasProdutor.length);
+
+    return palavrasIguais.length >= minimo;
+}
+
+async function aguardarOpcaoAutocomplete(texto, timeout) {
+    const inicio = Date.now();
+
+    while (Date.now() - inicio < timeout) {
+        const opcao = encontrarOpcaoAutocomplete(texto);
+
+        if (opcao) return opcao;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+function encontrarOpcaoAutocomplete(texto) {
+    const textoBusca = normalizar(texto);
+    const palavras = textoBusca.split(/\s+/).filter(Boolean);
+    const candidatos = Array.from(document.querySelectorAll([
+        "[role='option']",
+        "[role='listbox'] *",
+        "li",
+        "ul li",
+        ".MuiPopper-root *",
+        ".MuiAutocomplete-popper *",
+        ".MuiAutocomplete-option",
+        ".MuiMenuItem-root",
+        ".MuiListItem-root",
+        ".MuiPaper-root li",
+        ".MuiPaper-root [role='option']",
+        "[class*='Popper'] *",
+        "[class*='popover'] *",
+        "[class*='Popover'] *",
+        "[class*='dropdown'] *",
+        "[class*='Dropdown'] *",
+        "[class*='option']",
+        "[class*='Option']",
+        "[class*='menu']",
+        "[class*='Menu']"
+    ].join(",")))
+        .filter(isVisivel)
+        .map((elemento) => ({
+            elemento,
+            texto: normalizar(elemento.textContent),
+            tamanho: textoLimpo(elemento.textContent).length
+        }))
+        .filter((item) =>
+            item.texto.includes(textoBusca) ||
+            palavras.every((palavra) => item.texto.includes(palavra))
+        )
+        .sort((a, b) => a.tamanho - b.tamanho);
+
+    return candidatos[0]?.elemento || null;
+}
+
+async function aguardarNovoCte(timeout) {
+    const inicio = Date.now();
+
+    await esperarDocumentoPronto();
+    await sleep(150);
+
+    while (Date.now() - inicio < timeout) {
+        const botao = encontrarNovoCte();
+
+        if (botao) return botao;
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+
+    return null;
+}
+
+function encontrarNovoCte() {
+    const botoes = Array.from(document.querySelectorAll([
+        "button.MuiButton-containedPrimary.MuiButton-fullWidth",
+        "button.MuiButtonBase-root",
+        "button"
+    ].join(",")))
+        .filter(isVisivel)
+        .filter((elemento) => !elemento.disabled)
+        .filter((elemento) => elemento.querySelector(".MuiTouchRipple-root"));
+
+    return botoes.find((elemento) => {
+        const texto = normalizar(elemento.textContent).replace(/[-\s]/g, "");
+
+        return texto.includes("NOVOCTE");
+    }) || null;
+}
+
+function encontrarBotaoPorTextos(textos) {
+    const textosBusca = textos.map(normalizar);
+    const botoesDiretos = Array.from(document.querySelectorAll([
+        "button",
+        "[role='button']",
+        ".MuiButtonBase-root"
+    ].join(",")))
+        .filter(isVisivel)
+        .filter((elemento) => !elemento.disabled);
+
+    const porTextoDireto = botoesDiretos.find((elemento) => {
+        const texto = normalizar(elemento.textContent);
+
+        return textosBusca.some((textoBusca) => texto.includes(textoBusca));
+    });
+
+    if (porTextoDireto) return porTextoDireto;
+
+    const candidatosTexto = Array.from(document.querySelectorAll([
+        "span",
+        "div",
+        "p",
+        "h1",
+        "h2",
+        "h3",
+        ".MuiTypography-root"
+    ].join(",")))
+        .filter(isVisivel)
+        .filter((elemento) => {
+            const texto = normalizar(elemento.textContent);
+            return textosBusca.some((textoBusca) => texto.includes(textoBusca));
+        })
+        .sort((a, b) => textoLimpo(a.textContent).length - textoLimpo(b.textContent).length);
+
+    for (const candidato of candidatosTexto) {
+        const clicavel = resolverElementoClicavel(candidato);
+
+        if (
+            clicavel &&
+            clicavel !== document.body &&
+            isVisivel(clicavel) &&
+            !clicavel.disabled
+        ) {
+            return clicavel;
+        }
+    }
+
+    return null;
+}
+
+async function clicarElemento(elemento) {
+    elemento.scrollIntoView?.({
+        behavior: "instant",
+        block: "center"
+    });
+    await sleep(120);
+    elemento.click();
+}
+
+function isVisivel(elemento) {
+    const estilo = getComputedStyle(elemento);
+    const rect = elemento.getBoundingClientRect();
+
+    return estilo.display !== "none" &&
+        estilo.visibility !== "hidden" &&
+        Number(estilo.opacity || 1) > 0 &&
+        rect.width > 0 &&
+        rect.height > 0;
+}
+
+function resolverElementoClicavel(elemento) {
+    const direto = elemento.closest("button, a, [role='button'], [role='link'], [onclick], .card, [class*='card']");
+
+    if (direto) return direto;
+
+    let atual = elemento;
+
+    while (atual && atual !== document.body) {
+        if (pareceClicavel(atual)) return atual;
+        atual = atual.parentElement;
+    }
+
+    return elemento.parentElement || elemento;
+}
+
+function pareceClicavel(elemento) {
+    const estilo = getComputedStyle(elemento);
+
+    return estilo.cursor === "pointer" ||
+        elemento.hasAttribute("tabindex") ||
+        elemento.hasAttribute("aria-label") ||
+        elemento.className?.toString().includes("MuiButtonBase");
+}
+
+function obterChavesAcesso(pendente) {
+    const grupo = obterGrupoCteAtual(pendente);
+    const chaves = grupo?.chavesAcesso ||
+        pendente.grupoCte?.chavesAcesso ||
+        pendente.servico?.grupoCte?.chavesAcesso ||
+        pendente.servico?.chavesAcesso ||
+        pendente.servico?.nfs?.map((nf) => nf.chave) ||
+        [];
+
+    return Array.from(new Set(
+        chaves
+            .map((chave) => String(chave || "").replace(/\D/g, ""))
+            .filter((chave) => chave.length === 44)
+    ));
+}
+
+function obterProdutorNota(pendente) {
+    const grupo = obterGrupoCteAtual(pendente);
+
+    return textoLimpo(
+        grupo?.produtor ||
+        pendente.grupoCte?.produtor ||
+        pendente.servico?.grupoCte?.produtor ||
+        pendente.servico?.resumo?.produtor ||
+        pendente.servico?.nfs?.[0]?.produtor ||
+        pendente.servico?.destinoPedagio?.produtor ||
+        ""
+    );
+}
+
+function obterGruposCte(pendente) {
+    const fontes = [
+        pendente.gruposCte,
+        pendente.servico?.gruposCte,
+        pendente.servico?.gruposProdutores
+    ];
+    const listasValidas = fontes
+        .filter(Array.isArray)
+        .map((grupos) => grupos.filter((grupo) => {
+        const temChaves = Array.isArray(grupo.chavesAcesso) && grupo.chavesAcesso.length;
+        const temXmls = Array.isArray(grupo.arquivosXml) && grupo.arquivosXml.some((arquivo) => arquivo?.conteudo);
+
+        return temChaves || temXmls;
+        }));
+
+    return listasValidas.sort((a, b) => b.length - a.length)[0] || [];
+}
+
+function obterIndiceGrupoCteAtual(pendente) {
+    const indice = Number(pendente.indiceGrupoCteAtual ?? pendente.servico?.indiceGrupoCteAtual ?? 0);
+
+    return Number.isInteger(indice) && indice >= 0 ? indice : 0;
+}
+
+function obterGrupoCteAtual(pendente) {
+    const grupos = obterGruposCte(pendente);
+
+    if (!grupos.length) return null;
+
+    return grupos[obterIndiceGrupoCteAtual(pendente)] || grupos[0];
+}
+
+function grupoAtualTemXml(pendente) {
+    return obterXmlsGrupoAtual(pendente).length > 0;
+}
+
+function obterXmlsGrupoAtual(pendente) {
+    const grupo = obterGrupoCteAtual(pendente);
+    const arquivosXml = grupo?.arquivosXml || [];
+
+    return Array.isArray(arquivosXml) ?
+        arquivosXml.filter((arquivo) => arquivo?.conteudo) :
+        [];
+}
+
+function temProximoGrupoCte(pendente) {
+    const grupos = obterGruposCte(pendente);
+
+    return obterIndiceGrupoCteAtual(pendente) + 1 < grupos.length;
+}
+
+function registrarGrupoCteProcessado(pendente) {
+    const grupo = obterGrupoCteAtual(pendente);
+    const ids = obterIdsGruposCteProcessados(pendente);
+
+    if (grupo) ids.add(obterIdGrupoCte(grupo, obterIndiceGrupoCteAtual(pendente)));
+
+    return {
+        ...pendente,
+        atualizadoEm: Date.now(),
+        gruposCteProcessados: Array.from(ids)
+    };
+}
+
+function obterIdsGruposCteProcessados(pendente) {
+    return new Set(
+        Array.isArray(pendente.gruposCteProcessados)
+            ? pendente.gruposCteProcessados.filter(Boolean)
+            : []
+    );
+}
+
+function obterIdGrupoCte(grupo, indice) {
+    return String(
+        grupo?.id ||
+        grupo?.produtorDocumento ||
+        grupo?.produtor ||
+        `grupo-${indice}`
+    );
+}
+
+function formatarChaveAcesso(chave) {
+    return String(chave || "")
+        .replace(/\D/g, "")
+        .replace(/(.{4})/g, "$1 ")
+        .trim();
+}
+
+function dispararEventos(elemento, eventos = ["input", "change"]) {
+    eventos.forEach((evento) => {
+        elemento.dispatchEvent(new Event(evento, {
+            bubbles: true
+        }));
+    });
+}
+
+function setValorNativo(elemento, valor) {
+    const prototype = Object.getPrototypeOf(elemento);
+    const descriptor = Object.getOwnPropertyDescriptor(prototype, "value");
+
+    if (descriptor?.set) {
+        descriptor.set.call(elemento, valor);
+        return;
+    }
+
+    elemento.value = valor;
+}
+
+function listarOpcoesAutocomplete() {
+    return Array.from(document.querySelectorAll([
+        "[role='option']",
+        "li",
+        ".MuiAutocomplete-option",
+        ".MuiMenuItem-root",
+        ".MuiListItem-root",
+        ".MuiPopper-root *",
+        "[class*='option']",
+        "[class*='Option']",
+        "[class*='menu']",
+        "[class*='Menu']"
+    ].join(",")))
+        .filter(isVisivel)
+        .slice(0, 30)
+        .map((elemento) => ({
+            texto: textoLimpo(elemento.textContent),
+            classe: elemento.className?.toString() || "",
+            role: elemento.getAttribute("role") || ""
+        }));
+}
+
+function listarCamposVisiveis() {
+    return Array.from(document.querySelectorAll("input, button, [role='combobox'], [aria-haspopup='listbox'], .MuiSelect-select"))
+        .filter(isVisivel)
+        .slice(0, 40)
+        .map((elemento) => ({
+            texto: textoLimpo(elemento.textContent),
+            valor: textoLimpo(elemento.value),
+            nome: elemento.name || "",
+            id: elemento.id || "",
+            placeholder: elemento.placeholder || "",
+            ariaLabel: elemento.getAttribute("aria-label") || "",
+            classe: elemento.className?.toString() || ""
+        }));
+}
+
+async function aguardarMudancaAposClique(timeout = TIMEOUT_CTE_MS) {
+    const inicio = Date.now();
+    const urlInicial = location.href;
+
+    await sleep(PAUSA_POS_CLIQUE_MS);
+
+    while (Date.now() - inicio < timeout) {
+        if (location.href !== urlInicial) {
+            await sleep(250);
+            return;
+        }
+
+        if (encontrarBotaoPorTextos(["NOVO CTE", "NOVO CT-E", "EMITIR CTE", "CRIAR CTE"])) {
+            return;
+        }
+
+        await sleep(INTERVALO_BUSCA_MS);
+    }
+}
+
+function textoLimpo(texto) {
+    return String(texto || "").replace(/\s+/g, " ").trim();
+}
+
+function listarBotoesVisiveis() {
+    return Array.from(document.querySelectorAll("button, [role='button'], .MuiButtonBase-root"))
+        .filter(isVisivel)
+        .slice(0, 30)
+        .map((elemento) => ({
+            texto: textoLimpo(elemento.textContent),
+            ariaLabel: elemento.getAttribute("aria-label") || "",
+            classe: elemento.className?.toString() || ""
+        }));
+}
+
+function esperarDocumentoPronto() {
+    return new Promise((resolve) => {
+        if (document.readyState === "complete") {
+            resolve();
+            return;
+        }
+
+        window.addEventListener("load", resolve, { once: true });
+    });
+}
+
+function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}

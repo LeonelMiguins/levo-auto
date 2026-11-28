@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Auto-Pedágio REPOM</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <img class="brand-icon" src="../icon/icon-48.png" alt="">
+      <h1>Auto-Pedágio REPOM</h1>
+      <span class="version-label">Versão 1.0</span>
+    </header>
+
+    <section class="panel form-panel">
+      <div class="form-intro">
+        <div class="form-intro-copy">
+          <span class="trip-icon" aria-hidden="true">↗</span>
+          <div><h2>GERAR PEDÁGIO</h2><p>Importe XMLs para preencher os dados da viagem.</p></div>
+        </div>
+        <input id="xmlInput" type="file" accept=".xml,text/xml,application/xml" multiple hidden>
+      </div>
+
+      <div class="form-actions">
+        <label class="upload-button" for="xmlInput"><span aria-hidden="true">＋</span> Selecionar XMLs</label>
+        <button id="btnLimpar" class="clear-button" type="button" aria-label="Limpar formulário" title="Limpar formulário">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3"/></svg>
+        </button>
+        <label class="confirm-option"><input id="autoConfirmar" type="checkbox"><span><strong>Confirmar e imprimir automaticamente</strong><small>Se desmarcado, a confirmação fica para você no REPOM.</small></span></label>
+      </div>
+
+      <div id="status" class="status" aria-live="polite">Nenhuma viagem carregada.</div>
+
+      <label class="notes-field">
+        <span class="field-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h8l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm8 0v5h5M9 13h7m-7 4h7"/></svg>Números das NFs</span>
+        <textarea id="notas" rows="3" placeholder="Um número por linha, ou separados por vírgula" required></textarea>
+      </label>
+
+      <div class="field-grid">
+        <label><span class="field-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v11H3zM14 11h4l3 3v4h-7zM7 18a2 2 0 1 0 4 0m5 0a2 2 0 1 0 4 0"/></svg>Placa do caminhão</span>
+          <input id="placa" list="placas" autocomplete="off" placeholder="Ex.: APR0G69" required>
+          <datalist id="placas"></datalist>
+          <small id="placaAviso" class="field-warning" hidden>Placa não encontrada na base local de caminhões.</small>
+        </label>
+        <div class="driver-preview" aria-live="polite"><span class="driver-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><span class="driver-label">Motorista</span><strong id="motorista">Selecione a placa</strong></div>
+        <label><span class="field-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>Cidade</span>
+          <input id="cidade" autocomplete="off" placeholder="Cidade da entrega" required>
+        </label>
+        <div class="producer-card"><span>Produtor</span><strong id="resumoProdutor">-</strong></div>
+      </div>
+
+      <label class="company-field">Empresa
+        <select id="empresa" required>
+          <option value="">Selecione a empresa</option>
+          <option value="PLUSVAL">PLUSVAL</option>
+          <option value="PLUMA">PLUMA</option>
+        </select>
+      </label>
+
+      <button id="btnRepom" class="primary-button" type="button" disabled><span aria-hidden="true">▰</span> Iniciar emissão do vale-pedágio</button>
+    </section>
+
+    <details class="panel credentials-panel">
+      <summary>Configurar acesso automático ao REPOM</summary>
+      <p>As credenciais ficam armazenadas localmente nesta extensão. Você também pode deixar os campos vazios e entrar manualmente no REPOM.</p>
+      <div class="field-grid">
+        <label>Login REPOM PLUSVAL<input id="loginPlusval" autocomplete="username"></label>
+        <label>Senha REPOM PLUSVAL<input id="senhaPlusval" type="password" autocomplete="new-password"></label>
+        <label>Login REPOM PLUMA<input id="loginPluma" autocomplete="username"></label>
+        <label>Senha REPOM PLUMA<input id="senhaPluma" type="password" autocomplete="new-password"></label>
+      </div>
+      <button id="btnSalvarCredenciais" class="secondary-button" type="button">Salvar credenciais neste navegador</button>
+    </details>
+
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,3516 @@
+{
+  "fonte": "CALCULO CTe.xlsx",
+  "aba": "CALCULO CTE",
+  "coluna": "F - KM distancia",
+  "total": 750,
+  "alterados": [
+    {
+      "cliffor": 1147641,
+      "produtor": "CLAUDECIR ROBERTI",
+      "aviario": " A3",
+      "empresa": "PLUSVAL",
+      "indiceJson": 55,
+      "linhaPlanilha": 47,
+      "campos": {
+        "distancia": {
+          "antes": 160.5,
+          "depois": 161
+        },
+        "kmPagamento": {
+          "antes": 160.5,
+          "depois": 161
+        }
+      }
+    },
+    {
+      "cliffor": 1147641,
+      "produtor": "CLAUDECIR ROBERTI",
+      "aviario": " A4",
+      "empresa": "PLUSVAL",
+      "indiceJson": 57,
+      "linhaPlanilha": 49,
+      "campos": {
+        "distancia": {
+          "antes": 160.5,
+          "depois": 161
+        },
+        "kmPagamento": {
+          "antes": 160.5,
+          "depois": 161
+        }
+      }
+    },
+    {
+      "cliffor": 41542,
+      "produtor": "AILTON LUIZ SCHNEIDER",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 58,
+      "linhaPlanilha": 50,
+      "campos": {
+        "distancia": {
+          "antes": 131.5,
+          "depois": 132
+        },
+        "kmPagamento": {
+          "antes": 131.5,
+          "depois": 132
+        }
+      }
+    },
+    {
+      "cliffor": 1147641,
+      "produtor": "CLAUDECIR ROBERTI",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 59,
+      "linhaPlanilha": 51,
+      "campos": {
+        "distancia": {
+          "antes": 160.5,
+          "depois": 161
+        },
+        "kmPagamento": {
+          "antes": 160.5,
+          "depois": 161
+        }
+      }
+    },
+    {
+      "cliffor": 63561,
+      "produtor": "AIRTON FABIANO WIECZOREK",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 60,
+      "linhaPlanilha": 52,
+      "campos": {
+        "distancia": {
+          "antes": 121.5,
+          "depois": 122
+        },
+        "kmPagamento": {
+          "antes": 121.5,
+          "depois": 122
+        }
+      }
+    },
+    {
+      "cliffor": 63561,
+      "produtor": "AIRTON FABIANO WIECZOREK",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 62,
+      "linhaPlanilha": 54,
+      "campos": {
+        "distancia": {
+          "antes": 121.5,
+          "depois": 122
+        },
+        "kmPagamento": {
+          "antes": 121.5,
+          "depois": 122
+        }
+      }
+    },
+    {
+      "cliffor": 5335906,
+      "produtor": "ALCIDES BRAGAGNOLLO",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 72,
+      "linhaPlanilha": 64,
+      "campos": {
+        "distancia": {
+          "antes": 75.5,
+          "depois": 76
+        },
+        "kmPagamento": {
+          "antes": 75.5,
+          "depois": 76
+        }
+      }
+    },
+    {
+      "cliffor": 29953,
+      "produtor": "EDER THEODORO",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 74,
+      "linhaPlanilha": 66,
+      "campos": {
+        "distancia": {
+          "antes": 118.5,
+          "depois": 119
+        },
+        "kmPagamento": {
+          "antes": 118.5,
+          "depois": 119
+        }
+      }
+    },
+    {
+      "cliffor": 5393000,
+      "produtor": "ALTAMIR GOMES",
+      "aviario": " A2",
+      "empresa": "PLUMA",
+      "indiceJson": 75,
+      "linhaPlanilha": 67,
+      "campos": {
+        "distancia": {
+          "antes": 19.5,
+          "depois": 20
+        },
+        "kmPagamento": {
+          "antes": 19.5,
+          "depois": 20
+        }
+      }
+    },
+    {
+      "cliffor": 5393000,
+      "produtor": "ALTAMIR GOMES",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 77,
+      "linhaPlanilha": 69,
+      "campos": {
+        "distancia": {
+          "antes": 19.5,
+          "depois": 20
+        },
+        "kmPagamento": {
+          "antes": 19.5,
+          "depois": 20
+        }
+      }
+    },
+    {
+      "cliffor": 30071,
+      "produtor": "ALVARO LAURI ROLL",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 79,
+      "linhaPlanilha": 71,
+      "campos": {
+        "distancia": {
+          "antes": 134.5,
+          "depois": 135
+        },
+        "kmPagamento": {
+          "antes": 134.5,
+          "depois": 135
+        }
+      }
+    },
+    {
+      "cliffor": 30071,
+      "produtor": "ALVARO LAURI ROLL",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 81,
+      "linhaPlanilha": 73,
+      "campos": {
+        "distancia": {
+          "antes": 134.5,
+          "depois": 135
+        },
+        "kmPagamento": {
+          "antes": 134.5,
+          "depois": 135
+        }
+      }
+    },
+    {
+      "cliffor": 5301947,
+      "produtor": "ANA CRISTIANE DIEDRICHS DINIS",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 83,
+      "linhaPlanilha": 75,
+      "campos": {
+        "distancia": {
+          "antes": 94.5,
+          "depois": 95
+        },
+        "kmPagamento": {
+          "antes": 94.5,
+          "depois": 95
+        }
+      }
+    },
+    {
+      "cliffor": 30046,
+      "produtor": "ANA LUCIA TALINI",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 85,
+      "linhaPlanilha": 77,
+      "campos": {
+        "distancia": {
+          "antes": 61.5,
+          "depois": 62
+        },
+        "kmPagamento": {
+          "antes": 61.5,
+          "depois": 62
+        }
+      }
+    },
+    {
+      "cliffor": 30046,
+      "produtor": "ANA LUCIA TALINI",
+      "aviario": "A10",
+      "empresa": "PLUSVAL",
+      "indiceJson": 87,
+      "linhaPlanilha": 79,
+      "campos": {
+        "distancia": {
+          "antes": 61.5,
+          "depois": 62
+        },
+        "kmPagamento": {
+          "antes": 61.5,
+          "depois": 62
+        }
+      }
+    },
+    {
+      "cliffor": 30046,
+      "produtor": "ANA LUCIA TALINI",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 89,
+      "linhaPlanilha": 81,
+      "campos": {
+        "distancia": {
+          "antes": 61.5,
+          "depois": 62
+        },
+        "kmPagamento": {
+          "antes": 61.5,
+          "depois": 62
+        }
+      }
+    },
+    {
+      "cliffor": 30046,
+      "produtor": "ANA LUCIA TALINI",
+      "aviario": " A3",
+      "empresa": "PLUSVAL",
+      "indiceJson": 91,
+      "linhaPlanilha": 83,
+      "campos": {
+        "distancia": {
+          "antes": 61.5,
+          "depois": 62
+        },
+        "kmPagamento": {
+          "antes": 61.5,
+          "depois": 62
+        }
+      }
+    },
+    {
+      "cliffor": 30046,
+      "produtor": "ANA LUCIA TALINI",
+      "aviario": " A4",
+      "empresa": "PLUSVAL",
+      "indiceJson": 94,
+      "linhaPlanilha": 86,
+      "campos": {
+        "distancia": {
+          "antes": 61.5,
+          "depois": 62
+        },
+        "kmPagamento": {
+          "antes": 61.5,
+          "depois": 62
+        }
+      }
+    },
+    {
+      "cliffor": 30046,
+      "produtor": "ANA LUCIA TALINI",
+      "aviario": "A11",
+      "empresa": "PLUSVAL",
+      "indiceJson": 96,
+      "linhaPlanilha": 88,
+      "campos": {
+        "distancia": {
+          "antes": 61.5,
+          "depois": 62
+        },
+        "kmPagamento": {
+          "antes": 61.5,
+          "depois": 62
+        }
+      }
+    },
+    {
+      "cliffor": 30046,
+      "produtor": "ANA LUCIA TALINI",
+      "aviario": " A6",
+      "empresa": "PLUSVAL",
+      "indiceJson": 98,
+      "linhaPlanilha": 90,
+      "campos": {
+        "distancia": {
+          "antes": 61.5,
+          "depois": 62
+        },
+        "kmPagamento": {
+          "antes": 61.5,
+          "depois": 62
+        }
+      }
+    },
+    {
+      "cliffor": 30046,
+      "produtor": "ANA LUCIA TALINI",
+      "aviario": " A7",
+      "empresa": "PLUSVAL",
+      "indiceJson": 100,
+      "linhaPlanilha": 92,
+      "campos": {
+        "distancia": {
+          "antes": 61.5,
+          "depois": 62
+        },
+        "kmPagamento": {
+          "antes": 61.5,
+          "depois": 62
+        }
+      }
+    },
+    {
+      "cliffor": 30046,
+      "produtor": "ANA LUCIA TALINI",
+      "aviario": " A8",
+      "empresa": "PLUSVAL",
+      "indiceJson": 102,
+      "linhaPlanilha": 94,
+      "campos": {
+        "distancia": {
+          "antes": 61.5,
+          "depois": 62
+        },
+        "kmPagamento": {
+          "antes": 61.5,
+          "depois": 62
+        }
+      }
+    },
+    {
+      "cliffor": 30046,
+      "produtor": "ANA LUCIA TALINI",
+      "aviario": " A9",
+      "empresa": "PLUSVAL",
+      "indiceJson": 104,
+      "linhaPlanilha": 96,
+      "campos": {
+        "distancia": {
+          "antes": 61.5,
+          "depois": 62
+        },
+        "kmPagamento": {
+          "antes": 61.5,
+          "depois": 62
+        }
+      }
+    },
+    {
+      "cliffor": 30046,
+      "produtor": "ANA LUCIA TALINI",
+      "aviario": " A5",
+      "empresa": "PLUSVAL",
+      "indiceJson": 106,
+      "linhaPlanilha": 98,
+      "campos": {
+        "distancia": {
+          "antes": 61.5,
+          "depois": 62
+        },
+        "kmPagamento": {
+          "antes": 61.5,
+          "depois": 62
+        }
+      }
+    },
+    {
+      "cliffor": 30035,
+      "produtor": "LORI RODRIGUES",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 117,
+      "linhaPlanilha": 109,
+      "campos": {
+        "distancia": {
+          "antes": 129.5,
+          "depois": 130
+        },
+        "kmPagamento": {
+          "antes": 129.5,
+          "depois": 130
+        }
+      }
+    },
+    {
+      "cliffor": 30056,
+      "produtor": "NELSON HEIN",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 121,
+      "linhaPlanilha": 113,
+      "campos": {
+        "distancia": {
+          "antes": 128.5,
+          "depois": 129
+        },
+        "kmPagamento": {
+          "antes": 128.5,
+          "depois": 129
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "ANDERSON DIEDRICHS",
+      "aviario": " A2",
+      "empresa": "PLUMA",
+      "indiceJson": 124,
+      "linhaPlanilha": 116,
+      "campos": {
+        "distancia": {
+          "antes": 77.5,
+          "depois": 78
+        },
+        "kmPagamento": {
+          "antes": 77.5,
+          "depois": 78
+        }
+      }
+    },
+    {
+      "cliffor": 30044,
+      "produtor": "ANTONIO CANDIDO",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 125,
+      "linhaPlanilha": 117,
+      "campos": {
+        "distancia": {
+          "antes": 126.5,
+          "depois": 127
+        },
+        "kmPagamento": {
+          "antes": 126.5,
+          "depois": 127
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "ANDERSON DIEDRICHS",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 126,
+      "linhaPlanilha": 118,
+      "campos": {
+        "distancia": {
+          "antes": 77.5,
+          "depois": 78
+        },
+        "kmPagamento": {
+          "antes": 77.5,
+          "depois": 78
+        }
+      }
+    },
+    {
+      "cliffor": 30451,
+      "produtor": "ANDRE CHARLES EBERT",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 128,
+      "linhaPlanilha": 120,
+      "campos": {
+        "distancia": {
+          "antes": 129.5,
+          "depois": 130
+        },
+        "kmPagamento": {
+          "antes": 129.5,
+          "depois": 130
+        }
+      }
+    },
+    {
+      "cliffor": 1159976,
+      "produtor": "ELENIR IZALETE KEIBER DE OLIVEIRA",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 133,
+      "linhaPlanilha": 125,
+      "campos": {
+        "distancia": {
+          "antes": 103.5,
+          "depois": 104
+        },
+        "kmPagamento": {
+          "antes": 103.5,
+          "depois": 104
+        }
+      }
+    },
+    {
+      "cliffor": 29887,
+      "produtor": "ARDENICO DALL ALBA",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 145,
+      "linhaPlanilha": 137,
+      "campos": {
+        "distancia": {
+          "antes": 108.5,
+          "depois": 109
+        },
+        "kmPagamento": {
+          "antes": 108.5,
+          "depois": 109
+        }
+      }
+    },
+    {
+      "cliffor": 29958,
+      "produtor": "LAIRSON THEISEN",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 146,
+      "linhaPlanilha": 138,
+      "campos": {
+        "distancia": {
+          "antes": 114.5,
+          "depois": 115
+        },
+        "kmPagamento": {
+          "antes": 114.5,
+          "depois": 115
+        }
+      }
+    },
+    {
+      "cliffor": 29958,
+      "produtor": "LAIRSON THEISEN",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 148,
+      "linhaPlanilha": 140,
+      "campos": {
+        "distancia": {
+          "antes": 114.5,
+          "depois": 115
+        },
+        "kmPagamento": {
+          "antes": 114.5,
+          "depois": 115
+        }
+      }
+    },
+    {
+      "cliffor": 30465,
+      "produtor": "LIANE EBERT",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 150,
+      "linhaPlanilha": 142,
+      "campos": {
+        "distancia": {
+          "antes": 129.5,
+          "depois": 130
+        },
+        "kmPagamento": {
+          "antes": 129.5,
+          "depois": 130
+        }
+      }
+    },
+    {
+      "cliffor": 30466,
+      "produtor": "LIRIO BAYERLE",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 152,
+      "linhaPlanilha": 144,
+      "campos": {
+        "distancia": {
+          "antes": 121.5,
+          "depois": 122
+        },
+        "kmPagamento": {
+          "antes": 121.5,
+          "depois": 122
+        }
+      }
+    },
+    {
+      "cliffor": 5107601,
+      "produtor": "CARLOS ALBERTO MAROCHIO",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 163,
+      "linhaPlanilha": 155,
+      "campos": {
+        "distancia": {
+          "antes": 77.5,
+          "depois": 78
+        },
+        "kmPagamento": {
+          "antes": 77.5,
+          "depois": 78
+        }
+      }
+    },
+    {
+      "cliffor": 5107601,
+      "produtor": "CARLOS ALBERTO MAROCHIO",
+      "aviario": " A2",
+      "empresa": "PLUMA",
+      "indiceJson": 165,
+      "linhaPlanilha": 157,
+      "campos": {
+        "distancia": {
+          "antes": 77.5,
+          "depois": 78
+        },
+        "kmPagamento": {
+          "antes": 77.5,
+          "depois": 78
+        }
+      }
+    },
+    {
+      "cliffor": 44662,
+      "produtor": "CLAIRTON DAL PIVA",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 174,
+      "linhaPlanilha": 166,
+      "campos": {
+        "distancia": {
+          "antes": 122.5,
+          "depois": 123
+        },
+        "kmPagamento": {
+          "antes": 122.5,
+          "depois": 123
+        }
+      }
+    },
+    {
+      "cliffor": 44662,
+      "produtor": "CLAIRTON DAL PIVA",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 176,
+      "linhaPlanilha": 168,
+      "campos": {
+        "distancia": {
+          "antes": 122.5,
+          "depois": 123
+        },
+        "kmPagamento": {
+          "antes": 122.5,
+          "depois": 123
+        }
+      }
+    },
+    {
+      "cliffor": 30075,
+      "produtor": "CLARI FONTANELLA RAMOS",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 180,
+      "linhaPlanilha": 172,
+      "campos": {
+        "distancia": {
+          "antes": 157.5,
+          "depois": 158
+        },
+        "kmPagamento": {
+          "antes": 157.5,
+          "depois": 158
+        }
+      }
+    },
+    {
+      "cliffor": 30075,
+      "produtor": "CLARI FONTANELLA RAMOS",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 182,
+      "linhaPlanilha": 174,
+      "campos": {
+        "distancia": {
+          "antes": 157.5,
+          "depois": 158
+        },
+        "kmPagamento": {
+          "antes": 157.5,
+          "depois": 158
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "CLADIR LEVANDOSKI",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 187,
+      "linhaPlanilha": 179,
+      "campos": {
+        "distancia": {
+          "antes": 130.5,
+          "depois": 131
+        },
+        "kmPagamento": {
+          "antes": 130.5,
+          "depois": 131
+        }
+      }
+    },
+    {
+      "cliffor": 5316081,
+      "produtor": "CLAUDINO ROQUE LORENZATTO",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 193,
+      "linhaPlanilha": 185,
+      "campos": {
+        "distancia": {
+          "antes": 91.5,
+          "depois": 92
+        },
+        "kmPagamento": {
+          "antes": 91.5,
+          "depois": 92
+        }
+      }
+    },
+    {
+      "cliffor": 5316081,
+      "produtor": "CLAUDINO ROQUE LORENZATTO",
+      "aviario": " A2",
+      "empresa": "PLUMA",
+      "indiceJson": 195,
+      "linhaPlanilha": 187,
+      "campos": {
+        "distancia": {
+          "antes": 91.5,
+          "depois": 92
+        },
+        "kmPagamento": {
+          "antes": 91.5,
+          "depois": 92
+        }
+      }
+    },
+    {
+      "cliffor": 30454,
+      "produtor": "CLEIDE RITIANE ROLL",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 212,
+      "linhaPlanilha": 204,
+      "campos": {
+        "distancia": {
+          "antes": 134.5,
+          "depois": 135
+        },
+        "kmPagamento": {
+          "antes": 134.5,
+          "depois": 135
+        }
+      }
+    },
+    {
+      "cliffor": 30664,
+      "produtor": "EDEVIR CONTI",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 214,
+      "linhaPlanilha": 206,
+      "campos": {
+        "distancia": {
+          "antes": 156.5,
+          "depois": 157
+        },
+        "kmPagamento": {
+          "antes": 156.5,
+          "depois": 157
+        }
+      }
+    },
+    {
+      "cliffor": 30664,
+      "produtor": "EDEVIR CONTI",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 215,
+      "linhaPlanilha": 207,
+      "campos": {
+        "distancia": {
+          "antes": 156.5,
+          "depois": 157
+        },
+        "kmPagamento": {
+          "antes": 156.5,
+          "depois": 157
+        }
+      }
+    },
+    {
+      "cliffor": 30058,
+      "produtor": "ELIMAR SCHINDLER",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 217,
+      "linhaPlanilha": 209,
+      "campos": {
+        "distancia": {
+          "antes": 121.5,
+          "depois": 122
+        },
+        "kmPagamento": {
+          "antes": 121.5,
+          "depois": 122
+        }
+      }
+    },
+    {
+      "cliffor": 29954,
+      "produtor": "ELIMARI MAROSTIKA ROSO",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 219,
+      "linhaPlanilha": 211,
+      "campos": {
+        "distancia": {
+          "antes": 121.5,
+          "depois": 122
+        },
+        "kmPagamento": {
+          "antes": 121.5,
+          "depois": 122
+        }
+      }
+    },
+    {
+      "cliffor": 29432,
+      "produtor": "DELIRDES DAL PIVA KIPPER",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 220,
+      "linhaPlanilha": 212,
+      "campos": {
+        "distancia": {
+          "antes": 124.5,
+          "depois": 125
+        },
+        "kmPagamento": {
+          "antes": 124.5,
+          "depois": 125
+        }
+      }
+    },
+    {
+      "cliffor": 29423,
+      "produtor": "ELIO MINSKI",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 221,
+      "linhaPlanilha": 213,
+      "campos": {
+        "distancia": {
+          "antes": 114.5,
+          "depois": 115
+        },
+        "kmPagamento": {
+          "antes": 114.5,
+          "depois": 115
+        }
+      }
+    },
+    {
+      "cliffor": 29423,
+      "produtor": "ELIO MINSKI",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 223,
+      "linhaPlanilha": 215,
+      "campos": {
+        "distancia": {
+          "antes": 114.5,
+          "depois": 115
+        },
+        "kmPagamento": {
+          "antes": 114.5,
+          "depois": 115
+        }
+      }
+    },
+    {
+      "cliffor": 984442,
+      "produtor": "GILBERTO PAGLIARINI",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 226,
+      "linhaPlanilha": 218,
+      "campos": {
+        "distancia": {
+          "antes": 139.5,
+          "depois": 140
+        },
+        "kmPagamento": {
+          "antes": 139.5,
+          "depois": 140
+        }
+      }
+    },
+    {
+      "cliffor": 30459,
+      "produtor": "DILCEU ERNESTO ROMAN",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 227,
+      "linhaPlanilha": 219,
+      "campos": {
+        "distancia": {
+          "antes": 69.5,
+          "depois": 70
+        },
+        "kmPagamento": {
+          "antes": 69.5,
+          "depois": 70
+        }
+      }
+    },
+    {
+      "cliffor": 984442,
+      "produtor": "GILBERTO PAGLIARINI",
+      "aviario": "A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 228,
+      "linhaPlanilha": 220,
+      "campos": {
+        "distancia": {
+          "antes": 139.5,
+          "depois": 140
+        },
+        "kmPagamento": {
+          "antes": 139.5,
+          "depois": 140
+        }
+      }
+    },
+    {
+      "cliffor": 30459,
+      "produtor": "DILCEU ERNESTO ROMAN",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 229,
+      "linhaPlanilha": 221,
+      "campos": {
+        "distancia": {
+          "antes": 69.5,
+          "depois": 70
+        },
+        "kmPagamento": {
+          "antes": 69.5,
+          "depois": 70
+        }
+      }
+    },
+    {
+      "cliffor": 41541,
+      "produtor": "GILMAR AFONSO ESTIVAL",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 230,
+      "linhaPlanilha": 222,
+      "campos": {
+        "distancia": {
+          "antes": 68.5,
+          "depois": 69
+        },
+        "kmPagamento": {
+          "antes": 68.5,
+          "depois": 69
+        }
+      }
+    },
+    {
+      "cliffor": 30625,
+      "produtor": "GILNEI JOSE ESTIVAL",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 231,
+      "linhaPlanilha": 223,
+      "campos": {
+        "distancia": {
+          "antes": 68.5,
+          "depois": 69
+        },
+        "kmPagamento": {
+          "antes": 68.5,
+          "depois": 69
+        }
+      }
+    },
+    {
+      "cliffor": 30038,
+      "produtor": "ISMAR DARCI DAL PIVA",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 232,
+      "linhaPlanilha": 224,
+      "campos": {
+        "distancia": {
+          "antes": 112.5,
+          "depois": 113
+        },
+        "kmPagamento": {
+          "antes": 112.5,
+          "depois": 113
+        }
+      }
+    },
+    {
+      "cliffor": 30038,
+      "produtor": "ISMAR DARCI DAL PIVA",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 234,
+      "linhaPlanilha": 226,
+      "campos": {
+        "distancia": {
+          "antes": 112.5,
+          "depois": 113
+        },
+        "kmPagamento": {
+          "antes": 112.5,
+          "depois": 113
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "CLEUSA DE SOUZA RIBEIRO",
+      "aviario": " A4",
+      "empresa": "PLUMA",
+      "indiceJson": 235,
+      "linhaPlanilha": 227,
+      "campos": {
+        "distancia": {
+          "antes": 56.5,
+          "depois": 57
+        },
+        "kmPagamento": {
+          "antes": 56.5,
+          "depois": 57
+        }
+      }
+    },
+    {
+      "cliffor": 1166549,
+      "produtor": "MAICON ANDRE PAGLIARINI",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 236,
+      "linhaPlanilha": 228,
+      "campos": {
+        "distancia": {
+          "antes": 139.5,
+          "depois": 140
+        },
+        "kmPagamento": {
+          "antes": 139.5,
+          "depois": 140
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "CLEUSA DE SOUZA RIBEIRO",
+      "aviario": " A3",
+      "empresa": "PLUMA",
+      "indiceJson": 237,
+      "linhaPlanilha": 229,
+      "campos": {
+        "distancia": {
+          "antes": 56.5,
+          "depois": 57
+        },
+        "kmPagamento": {
+          "antes": 56.5,
+          "depois": 57
+        }
+      }
+    },
+    {
+      "cliffor": 1166514,
+      "produtor": "MATEUS HENRIQUE MINSKI",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 238,
+      "linhaPlanilha": 230,
+      "campos": {
+        "distancia": {
+          "antes": 114.5,
+          "depois": 115
+        },
+        "kmPagamento": {
+          "antes": 114.5,
+          "depois": 115
+        }
+      }
+    },
+    {
+      "cliffor": 30034,
+      "produtor": "MIGUEL LUIZ WAGNER",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 239,
+      "linhaPlanilha": 231,
+      "campos": {
+        "distancia": {
+          "antes": 125.5,
+          "depois": 126
+        },
+        "kmPagamento": {
+          "antes": 125.5,
+          "depois": 126
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "DELCI SCHNEIDER",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 242,
+      "linhaPlanilha": 234,
+      "campos": {
+        "distancia": {
+          "antes": 131.5,
+          "depois": 132
+        },
+        "kmPagamento": {
+          "antes": 131.5,
+          "depois": 132
+        }
+      }
+    },
+    {
+      "cliffor": 30054,
+      "produtor": "NERI LUIZ PHILIPPSEN",
+      "aviario": " A3",
+      "empresa": "PLUSVAL",
+      "indiceJson": 243,
+      "linhaPlanilha": 235,
+      "campos": {
+        "distancia": {
+          "antes": 107.5,
+          "depois": 108
+        },
+        "kmPagamento": {
+          "antes": 107.5,
+          "depois": 108
+        }
+      }
+    },
+    {
+      "cliffor": 30054,
+      "produtor": "NERI LUIZ PHILIPPSEN",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 244,
+      "linhaPlanilha": 236,
+      "campos": {
+        "distancia": {
+          "antes": 107.5,
+          "depois": 108
+        },
+        "kmPagamento": {
+          "antes": 107.5,
+          "depois": 108
+        }
+      }
+    },
+    {
+      "cliffor": 30054,
+      "produtor": "NERI LUIZ PHILIPPSEN",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 245,
+      "linhaPlanilha": 237,
+      "campos": {
+        "distancia": {
+          "antes": 107.5,
+          "depois": 108
+        },
+        "kmPagamento": {
+          "antes": 107.5,
+          "depois": 108
+        }
+      }
+    },
+    {
+      "cliffor": 30052,
+      "produtor": "EDIO ANTONIO BARBOSA",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 246,
+      "linhaPlanilha": 238,
+      "campos": {
+        "distancia": {
+          "antes": 108.5,
+          "depois": 109
+        },
+        "kmPagamento": {
+          "antes": 108.5,
+          "depois": 109
+        }
+      }
+    },
+    {
+      "cliffor": 1139592,
+      "produtor": "SIDEMAR TAUFEMBACH",
+      "aviario": " A3",
+      "empresa": "PLUSVAL",
+      "indiceJson": 247,
+      "linhaPlanilha": 239,
+      "campos": {
+        "distancia": {
+          "antes": 75.5,
+          "depois": 76
+        },
+        "kmPagamento": {
+          "antes": 75.5,
+          "depois": 76
+        }
+      }
+    },
+    {
+      "cliffor": 30052,
+      "produtor": "EDIO ANTONIO BARBOSA",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 248,
+      "linhaPlanilha": 240,
+      "campos": {
+        "distancia": {
+          "antes": 108.5,
+          "depois": 109
+        },
+        "kmPagamento": {
+          "antes": 108.5,
+          "depois": 109
+        }
+      }
+    },
+    {
+      "cliffor": 1139592,
+      "produtor": "SIDEMAR TAUFEMBACH",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 249,
+      "linhaPlanilha": 241,
+      "campos": {
+        "distancia": {
+          "antes": 75.5,
+          "depois": 76
+        },
+        "kmPagamento": {
+          "antes": 75.5,
+          "depois": 76
+        }
+      }
+    },
+    {
+      "cliffor": 1139592,
+      "produtor": "SIDEMAR TAUFEMBACH",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 251,
+      "linhaPlanilha": 243,
+      "campos": {
+        "distancia": {
+          "antes": 75.5,
+          "depois": 76
+        },
+        "kmPagamento": {
+          "antes": 75.5,
+          "depois": 76
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "DILMAR CANDIOTO",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 260,
+      "linhaPlanilha": 252,
+      "campos": {
+        "distancia": {
+          "antes": 38.5,
+          "depois": 39
+        },
+        "kmPagamento": {
+          "antes": 38.5,
+          "depois": 39
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "DIRCE TERESINHA ELY SCHNEIDER",
+      "aviario": " A2",
+      "empresa": "PLUMA",
+      "indiceJson": 280,
+      "linhaPlanilha": 272,
+      "campos": {
+        "distancia": {
+          "antes": 75.5,
+          "depois": 76
+        },
+        "kmPagamento": {
+          "antes": 75.5,
+          "depois": 76
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "DIRCE TERESINHA ELY SCHNEIDER",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 282,
+      "linhaPlanilha": 274,
+      "campos": {
+        "distancia": {
+          "antes": 75.5,
+          "depois": 76
+        },
+        "kmPagamento": {
+          "antes": 75.5,
+          "depois": 76
+        }
+      }
+    },
+    {
+      "cliffor": 29895,
+      "produtor": "ERNESTO RUDELL",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 307,
+      "linhaPlanilha": 299,
+      "campos": {
+        "distancia": {
+          "antes": 105.5,
+          "depois": 106
+        },
+        "kmPagamento": {
+          "antes": 105.5,
+          "depois": 106
+        }
+      }
+    },
+    {
+      "cliffor": 6198163,
+      "produtor": "ERNO ERENO JUST",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 309,
+      "linhaPlanilha": 301,
+      "campos": {
+        "distancia": {
+          "antes": 91.5,
+          "depois": 92
+        },
+        "kmPagamento": {
+          "antes": 91.5,
+          "depois": 92
+        }
+      }
+    },
+    {
+      "cliffor": 6198163,
+      "produtor": "ERNO ERENO JUST",
+      "aviario": " A2",
+      "empresa": "PLUMA",
+      "indiceJson": 311,
+      "linhaPlanilha": 303,
+      "campos": {
+        "distancia": {
+          "antes": 91.5,
+          "depois": 92
+        },
+        "kmPagamento": {
+          "antes": 91.5,
+          "depois": 92
+        }
+      }
+    },
+    {
+      "cliffor": 30070,
+      "produtor": "ESPOLIO SALVADOR ACORDI FONTANELA",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 313,
+      "linhaPlanilha": 305,
+      "campos": {
+        "distancia": {
+          "antes": 83.5,
+          "depois": 84
+        },
+        "kmPagamento": {
+          "antes": 83.5,
+          "depois": 84
+        }
+      }
+    },
+    {
+      "cliffor": 29897,
+      "produtor": "EVALDO BRAND",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 315,
+      "linhaPlanilha": 307,
+      "campos": {
+        "distancia": {
+          "antes": 106.5,
+          "depois": 107
+        },
+        "kmPagamento": {
+          "antes": 106.5,
+          "depois": 107
+        }
+      }
+    },
+    {
+      "cliffor": 29897,
+      "produtor": "EVALDO BRAND",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 317,
+      "linhaPlanilha": 309,
+      "campos": {
+        "distancia": {
+          "antes": 106.5,
+          "depois": 107
+        },
+        "kmPagamento": {
+          "antes": 106.5,
+          "depois": 107
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "ELANI MIRIA KIST STOCKER",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 319,
+      "linhaPlanilha": 311,
+      "campos": {
+        "distancia": {
+          "antes": 19.5,
+          "depois": 20
+        },
+        "kmPagamento": {
+          "antes": 19.5,
+          "depois": 20
+        }
+      }
+    },
+    {
+      "cliffor": 30062,
+      "produtor": "EVALDO LUIZ HERDMAN BUENO",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 321,
+      "linhaPlanilha": 313,
+      "campos": {
+        "distancia": {
+          "antes": 177.5,
+          "depois": 178
+        },
+        "kmPagamento": {
+          "antes": 177.5,
+          "depois": 178
+        }
+      }
+    },
+    {
+      "cliffor": 30062,
+      "produtor": "EVALDO LUIZ HERDMAN BUENO",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 323,
+      "linhaPlanilha": 315,
+      "campos": {
+        "distancia": {
+          "antes": 177.5,
+          "depois": 178
+        },
+        "kmPagamento": {
+          "antes": 177.5,
+          "depois": 178
+        }
+      }
+    },
+    {
+      "cliffor": 41542,
+      "produtor": "AILTON LUIZ SCHNEIDER",
+      "aviario": "A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 325,
+      "linhaPlanilha": 317,
+      "campos": {
+        "distancia": {
+          "antes": 131.5,
+          "depois": 132
+        },
+        "kmPagamento": {
+          "antes": 131.5,
+          "depois": 132
+        }
+      }
+    },
+    {
+      "cliffor": 30040,
+      "produtor": "EVERTON PEDRON",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 326,
+      "linhaPlanilha": 318,
+      "campos": {
+        "distancia": {
+          "antes": 99.5,
+          "depois": 100
+        },
+        "kmPagamento": {
+          "antes": 99.5,
+          "depois": 100
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "ELIO ZUFFO",
+      "aviario": " A2",
+      "empresa": "PLUMA",
+      "indiceJson": 331,
+      "linhaPlanilha": 323,
+      "campos": {
+        "distancia": {
+          "antes": 71.5,
+          "depois": 72
+        },
+        "kmPagamento": {
+          "antes": 71.5,
+          "depois": 72
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "ELIO ZUFFO",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 332,
+      "linhaPlanilha": 324,
+      "campos": {
+        "distancia": {
+          "antes": 71.5,
+          "depois": 72
+        },
+        "kmPagamento": {
+          "antes": 71.5,
+          "depois": 72
+        }
+      }
+    },
+    {
+      "cliffor": 5829801,
+      "produtor": "FERNANDO LUIZ MANFROI",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 335,
+      "linhaPlanilha": 327,
+      "campos": {
+        "distancia": {
+          "antes": 58.5,
+          "depois": 59
+        },
+        "kmPagamento": {
+          "antes": 58.5,
+          "depois": 59
+        }
+      }
+    },
+    {
+      "cliffor": 5829801,
+      "produtor": "FERNANDO LUIZ MANFROI",
+      "aviario": " A3",
+      "empresa": "PLUMA",
+      "indiceJson": 336,
+      "linhaPlanilha": 328,
+      "campos": {
+        "distancia": {
+          "antes": 58.5,
+          "depois": 59
+        },
+        "kmPagamento": {
+          "antes": 58.5,
+          "depois": 59
+        }
+      }
+    },
+    {
+      "cliffor": 5829801,
+      "produtor": "FERNANDO LUIZ MANFROI",
+      "aviario": " A2",
+      "empresa": "PLUMA",
+      "indiceJson": 337,
+      "linhaPlanilha": 329,
+      "campos": {
+        "distancia": {
+          "antes": 58.5,
+          "depois": 59
+        },
+        "kmPagamento": {
+          "antes": 58.5,
+          "depois": 59
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "EUDES JOSE DALLAGNOL",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 341,
+      "linhaPlanilha": 333,
+      "campos": {
+        "distancia": {
+          "antes": 64.5,
+          "depois": 65
+        },
+        "kmPagamento": {
+          "antes": 64.5,
+          "depois": 65
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "EUDES JOSE DALLAGNOL",
+      "aviario": " A2",
+      "empresa": "PLUMA",
+      "indiceJson": 342,
+      "linhaPlanilha": 334,
+      "campos": {
+        "distancia": {
+          "antes": 64.5,
+          "depois": 65
+        },
+        "kmPagamento": {
+          "antes": 64.5,
+          "depois": 65
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "EVANDRO RODRIGO SILVA",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 350,
+      "linhaPlanilha": 342,
+      "campos": {
+        "distancia": {
+          "antes": 121.5,
+          "depois": 122
+        },
+        "kmPagamento": {
+          "antes": 121.5,
+          "depois": 122
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "ADEMIR LUCHT",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 351,
+      "linhaPlanilha": 343,
+      "campos": {
+        "distancia": {
+          "antes": 68.5,
+          "depois": 69
+        },
+        "kmPagamento": {
+          "antes": 68.5,
+          "depois": 69
+        }
+      }
+    },
+    {
+      "cliffor": 30061,
+      "produtor": "HELIO CELSO CHECOSSI",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 354,
+      "linhaPlanilha": 346,
+      "campos": {
+        "distancia": {
+          "antes": 111.5,
+          "depois": 112
+        },
+        "kmPagamento": {
+          "antes": 111.5,
+          "depois": 112
+        }
+      }
+    },
+    {
+      "cliffor": 30666,
+      "produtor": "HELMUTH SCHNEIDER",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 356,
+      "linhaPlanilha": 348,
+      "campos": {
+        "distancia": {
+          "antes": 131.5,
+          "depois": 132
+        },
+        "kmPagamento": {
+          "antes": 131.5,
+          "depois": 132
+        }
+      }
+    },
+    {
+      "cliffor": 30666,
+      "produtor": "HELMUTH SCHNEIDER",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 358,
+      "linhaPlanilha": 350,
+      "campos": {
+        "distancia": {
+          "antes": 131.5,
+          "depois": 132
+        },
+        "kmPagamento": {
+          "antes": 131.5,
+          "depois": 132
+        }
+      }
+    },
+    {
+      "cliffor": 58421,
+      "produtor": "IVAN RICARDO LAZZAROTO",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 360,
+      "linhaPlanilha": 352,
+      "campos": {
+        "distancia": {
+          "antes": 166.5,
+          "depois": 167
+        },
+        "kmPagamento": {
+          "antes": 166.5,
+          "depois": 167
+        }
+      }
+    },
+    {
+      "cliffor": 44341,
+      "produtor": "JOAO ROBERTO GASPARELO",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 362,
+      "linhaPlanilha": 354,
+      "campos": {
+        "distancia": {
+          "antes": 69.5,
+          "depois": 70
+        },
+        "kmPagamento": {
+          "antes": 69.5,
+          "depois": 70
+        }
+      }
+    },
+    {
+      "cliffor": 44341,
+      "produtor": "JOAO ROBERTO GASPARELO",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 364,
+      "linhaPlanilha": 356,
+      "campos": {
+        "distancia": {
+          "antes": 69.5,
+          "depois": 70
+        },
+        "kmPagamento": {
+          "antes": 69.5,
+          "depois": 70
+        }
+      }
+    },
+    {
+      "cliffor": 30059,
+      "produtor": "JONAS HERDMAN",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 365,
+      "linhaPlanilha": 357,
+      "campos": {
+        "distancia": {
+          "antes": 177.5,
+          "depois": 178
+        },
+        "kmPagamento": {
+          "antes": 177.5,
+          "depois": 178
+        }
+      }
+    },
+    {
+      "cliffor": 30059,
+      "produtor": "JONAS HERDMAN",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 366,
+      "linhaPlanilha": 358,
+      "campos": {
+        "distancia": {
+          "antes": 177.5,
+          "depois": 178
+        },
+        "kmPagamento": {
+          "antes": 177.5,
+          "depois": 178
+        }
+      }
+    },
+    {
+      "cliffor": 65166,
+      "produtor": "JULIETE CRISTINA WESSELING SCHNEIDER",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 370,
+      "linhaPlanilha": 362,
+      "campos": {
+        "distancia": {
+          "antes": 131.5,
+          "depois": 132
+        },
+        "kmPagamento": {
+          "antes": 131.5,
+          "depois": 132
+        }
+      }
+    },
+    {
+      "cliffor": 29964,
+      "produtor": "MARLO ALEXANDRE FORALOSSO",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 372,
+      "linhaPlanilha": 364,
+      "campos": {
+        "distancia": {
+          "antes": 104.5,
+          "depois": 105
+        },
+        "kmPagamento": {
+          "antes": 104.5,
+          "depois": 105
+        }
+      }
+    },
+    {
+      "cliffor": 29964,
+      "produtor": "MARLO ALEXANDRE FORALOSSO",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 374,
+      "linhaPlanilha": 366,
+      "campos": {
+        "distancia": {
+          "antes": 104.5,
+          "depois": 105
+        },
+        "kmPagamento": {
+          "antes": 104.5,
+          "depois": 105
+        }
+      }
+    },
+    {
+      "cliffor": 29966,
+      "produtor": "MILTON VALDENI LAVARDA",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 376,
+      "linhaPlanilha": 368,
+      "campos": {
+        "distancia": {
+          "antes": 133.5,
+          "depois": 134
+        },
+        "kmPagamento": {
+          "antes": 133.5,
+          "depois": 134
+        }
+      }
+    },
+    {
+      "cliffor": 30032,
+      "produtor": "NELSON JOSE DE SOUZA",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 378,
+      "linhaPlanilha": 370,
+      "campos": {
+        "distancia": {
+          "antes": 113.5,
+          "depois": 114
+        },
+        "kmPagamento": {
+          "antes": 113.5,
+          "depois": 114
+        }
+      }
+    },
+    {
+      "cliffor": 30032,
+      "produtor": "NELSON JOSE DE SOUZA",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 380,
+      "linhaPlanilha": 372,
+      "campos": {
+        "distancia": {
+          "antes": 113.5,
+          "depois": 114
+        },
+        "kmPagamento": {
+          "antes": 113.5,
+          "depois": 114
+        }
+      }
+    },
+    {
+      "cliffor": 30665,
+      "produtor": "ODAIR MENEGON",
+      "aviario": " A5",
+      "empresa": "PLUSVAL",
+      "indiceJson": 382,
+      "linhaPlanilha": 374,
+      "campos": {
+        "distancia": {
+          "antes": 72.5,
+          "depois": 73
+        },
+        "kmPagamento": {
+          "antes": 72.5,
+          "depois": 73
+        }
+      }
+    },
+    {
+      "cliffor": 30665,
+      "produtor": "ODAIR MENEGON",
+      "aviario": " A3",
+      "empresa": "PLUSVAL",
+      "indiceJson": 383,
+      "linhaPlanilha": 375,
+      "campos": {
+        "distancia": {
+          "antes": 72.5,
+          "depois": 73
+        },
+        "kmPagamento": {
+          "antes": 72.5,
+          "depois": 73
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "FUNDACAO PARA O DESENVOLVIMENTO CIENTIFICO E TECNOLOGIC",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 384,
+      "linhaPlanilha": 376,
+      "campos": {
+        "distancia": {
+          "antes": 21.5,
+          "depois": 22
+        },
+        "kmPagamento": {
+          "antes": 21.5,
+          "depois": 22
+        }
+      }
+    },
+    {
+      "cliffor": 30665,
+      "produtor": "ODAIR MENEGON",
+      "aviario": " A4",
+      "empresa": "PLUSVAL",
+      "indiceJson": 385,
+      "linhaPlanilha": 377,
+      "campos": {
+        "distancia": {
+          "antes": 72.5,
+          "depois": 73
+        },
+        "kmPagamento": {
+          "antes": 72.5,
+          "depois": 73
+        }
+      }
+    },
+    {
+      "cliffor": 30665,
+      "produtor": "ODAIR MENEGON",
+      "aviario": " A6",
+      "empresa": "PLUSVAL",
+      "indiceJson": 386,
+      "linhaPlanilha": 378,
+      "campos": {
+        "distancia": {
+          "antes": 72.5,
+          "depois": 73
+        },
+        "kmPagamento": {
+          "antes": 72.5,
+          "depois": 73
+        }
+      }
+    },
+    {
+      "cliffor": 29969,
+      "produtor": "ORLANDO HENNIG",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 388,
+      "linhaPlanilha": 380,
+      "campos": {
+        "distancia": {
+          "antes": 94.5,
+          "depois": 95
+        },
+        "kmPagamento": {
+          "antes": 94.5,
+          "depois": 95
+        }
+      }
+    },
+    {
+      "cliffor": 5241707,
+      "produtor": "IGNES FALABRETTI",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 397,
+      "linhaPlanilha": 389,
+      "campos": {
+        "distancia": {
+          "antes": 69.5,
+          "depois": 70
+        },
+        "kmPagamento": {
+          "antes": 69.5,
+          "depois": 70
+        }
+      }
+    },
+    {
+      "cliffor": 5007798,
+      "produtor": "INGRIT MARLOW",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 399,
+      "linhaPlanilha": 391,
+      "campos": {
+        "distancia": {
+          "antes": 91.5,
+          "depois": 92
+        },
+        "kmPagamento": {
+          "antes": 91.5,
+          "depois": 92
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "GILMAR CARLOS SCHMITT",
+      "aviario": " A2",
+      "empresa": "PLUMA",
+      "indiceJson": 404,
+      "linhaPlanilha": 396,
+      "campos": {
+        "distancia": {
+          "antes": 32.5,
+          "depois": 33
+        },
+        "kmPagamento": {
+          "antes": 32.5,
+          "depois": 33
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "GILMAR CARLOS SCHMITT",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 405,
+      "linhaPlanilha": 397,
+      "campos": {
+        "distancia": {
+          "antes": 32.5,
+          "depois": 33
+        },
+        "kmPagamento": {
+          "antes": 32.5,
+          "depois": 33
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "GLACY MADALENA STOEBERL",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 408,
+      "linhaPlanilha": 400,
+      "campos": {
+        "distancia": {
+          "antes": 32.5,
+          "depois": 33
+        },
+        "kmPagamento": {
+          "antes": 32.5,
+          "depois": 33
+        }
+      }
+    },
+    {
+      "cliffor": 6371060,
+      "produtor": "JAIR KRAIESKI",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 415,
+      "linhaPlanilha": 407,
+      "campos": {
+        "distancia": {
+          "antes": 48.5,
+          "depois": 49
+        },
+        "kmPagamento": {
+          "antes": 48.5,
+          "depois": 49
+        }
+      }
+    },
+    {
+      "cliffor": 30463,
+      "produtor": "JANDIR ESCHEMBACH",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 416,
+      "linhaPlanilha": 408,
+      "campos": {
+        "distancia": {
+          "antes": 123.5,
+          "depois": 124
+        },
+        "kmPagamento": {
+          "antes": 123.5,
+          "depois": 124
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "HERMES ROBERTO BONATTO",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 418,
+      "linhaPlanilha": 410,
+      "campos": {
+        "distancia": {
+          "antes": 19.5,
+          "depois": 20
+        },
+        "kmPagamento": {
+          "antes": 19.5,
+          "depois": 20
+        }
+      }
+    },
+    {
+      "cliffor": 6363326,
+      "produtor": "JOAO CLAUDIO CANO",
+      "aviario": " A4",
+      "empresa": "PLUMA",
+      "indiceJson": 419,
+      "linhaPlanilha": 411,
+      "campos": {
+        "distancia": {
+          "antes": 69.5,
+          "depois": 70
+        },
+        "kmPagamento": {
+          "antes": 69.5,
+          "depois": 70
+        }
+      }
+    },
+    {
+      "cliffor": 6363326,
+      "produtor": "JOAO CLAUDIO CANO",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 420,
+      "linhaPlanilha": 412,
+      "campos": {
+        "distancia": {
+          "antes": 69.5,
+          "depois": 70
+        },
+        "kmPagamento": {
+          "antes": 69.5,
+          "depois": 70
+        }
+      }
+    },
+    {
+      "cliffor": 6363326,
+      "produtor": "JOAO CLAUDIO CANO",
+      "aviario": " A2",
+      "empresa": "PLUMA",
+      "indiceJson": 421,
+      "linhaPlanilha": 413,
+      "campos": {
+        "distancia": {
+          "antes": 69.5,
+          "depois": 70
+        },
+        "kmPagamento": {
+          "antes": 69.5,
+          "depois": 70
+        }
+      }
+    },
+    {
+      "cliffor": 6363326,
+      "produtor": "JOAO CLAUDIO CANO",
+      "aviario": " A3",
+      "empresa": "PLUMA",
+      "indiceJson": 422,
+      "linhaPlanilha": 414,
+      "campos": {
+        "distancia": {
+          "antes": 69.5,
+          "depois": 70
+        },
+        "kmPagamento": {
+          "antes": 69.5,
+          "depois": 70
+        }
+      }
+    },
+    {
+      "cliffor": 29891,
+      "produtor": "JOSE NEI ROCHENBACH",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 434,
+      "linhaPlanilha": 426,
+      "campos": {
+        "distancia": {
+          "antes": 64.5,
+          "depois": 65
+        },
+        "kmPagamento": {
+          "antes": 64.5,
+          "depois": 65
+        }
+      }
+    },
+    {
+      "cliffor": 6455646,
+      "produtor": "EDSON OWSIANY",
+      "aviario": "A1",
+      "empresa": "PLUMA",
+      "indiceJson": 442,
+      "linhaPlanilha": 434,
+      "campos": {
+        "distancia": {
+          "antes": 32.5,
+          "depois": 33
+        },
+        "kmPagamento": {
+          "antes": 32.5,
+          "depois": 33
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "JOAO ISRAIEL CARNAVAL",
+      "aviario": " A2",
+      "empresa": "PLUMA",
+      "indiceJson": 443,
+      "linhaPlanilha": 435,
+      "campos": {
+        "distancia": {
+          "antes": 36.5,
+          "depois": 37
+        },
+        "kmPagamento": {
+          "antes": 36.5,
+          "depois": 37
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "JOAO ISRAIEL CARNAVAL",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 444,
+      "linhaPlanilha": 436,
+      "campos": {
+        "distancia": {
+          "antes": 36.5,
+          "depois": 37
+        },
+        "kmPagamento": {
+          "antes": 36.5,
+          "depois": 37
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "JOAO JADIR VIEIRA DO PRADO",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 445,
+      "linhaPlanilha": 437,
+      "campos": {
+        "distancia": {
+          "antes": 31.5,
+          "depois": 32
+        },
+        "kmPagamento": {
+          "antes": 31.5,
+          "depois": 32
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "JOAO MARCOS SEIBERT",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 449,
+      "linhaPlanilha": 441,
+      "campos": {
+        "distancia": {
+          "antes": 40.5,
+          "depois": 41
+        },
+        "kmPagamento": {
+          "antes": 40.5,
+          "depois": 41
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "LUCIO RAMBO",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 488,
+      "linhaPlanilha": 480,
+      "campos": {
+        "distancia": {
+          "antes": 69.5,
+          "depois": 70
+        },
+        "kmPagamento": {
+          "antes": 69.5,
+          "depois": 70
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "LUCIO RAMBO",
+      "aviario": " A2",
+      "empresa": "PLUMA",
+      "indiceJson": 489,
+      "linhaPlanilha": 481,
+      "campos": {
+        "distancia": {
+          "antes": 69.5,
+          "depois": 70
+        },
+        "kmPagamento": {
+          "antes": 69.5,
+          "depois": 70
+        }
+      }
+    },
+    {
+      "cliffor": 5854768,
+      "produtor": "NEVIDON LUIS REHBEIN",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 528,
+      "linhaPlanilha": 520,
+      "campos": {
+        "distancia": {
+          "antes": 91.5,
+          "depois": 92
+        },
+        "kmPagamento": {
+          "antes": 91.5,
+          "depois": 92
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "MILTON APARECIDO HEREK",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 545,
+      "linhaPlanilha": 537,
+      "campos": {
+        "distancia": {
+          "antes": 68.5,
+          "depois": 69
+        },
+        "kmPagamento": {
+          "antes": 68.5,
+          "depois": 69
+        }
+      }
+    },
+    {
+      "cliffor": 4619030,
+      "produtor": "ORLANDO ORBEN KRAIESKI",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 546,
+      "linhaPlanilha": 538,
+      "campos": {
+        "distancia": {
+          "antes": 48.5,
+          "depois": 49
+        },
+        "kmPagamento": {
+          "antes": 48.5,
+          "depois": 49
+        }
+      }
+    },
+    {
+      "cliffor": 6219993,
+      "produtor": "ROBERTO BICKEL",
+      "aviario": " A3",
+      "empresa": "PLUMA",
+      "indiceJson": 561,
+      "linhaPlanilha": 553,
+      "campos": {
+        "distancia": {
+          "antes": 93.5,
+          "depois": 94
+        },
+        "kmPagamento": {
+          "antes": 93.5,
+          "depois": 94
+        }
+      }
+    },
+    {
+      "cliffor": 6219993,
+      "produtor": "ROBERTO BICKEL",
+      "aviario": " A2",
+      "empresa": "PLUMA",
+      "indiceJson": 562,
+      "linhaPlanilha": 554,
+      "campos": {
+        "distancia": {
+          "antes": 93.5,
+          "depois": 94
+        },
+        "kmPagamento": {
+          "antes": 93.5,
+          "depois": 94
+        }
+      }
+    },
+    {
+      "cliffor": 6219993,
+      "produtor": "ROBERTO BICKEL",
+      "aviario": " A4",
+      "empresa": "PLUMA",
+      "indiceJson": 563,
+      "linhaPlanilha": 555,
+      "campos": {
+        "distancia": {
+          "antes": 93.5,
+          "depois": 94
+        },
+        "kmPagamento": {
+          "antes": 93.5,
+          "depois": 94
+        }
+      }
+    },
+    {
+      "cliffor": 6219993,
+      "produtor": "ROBERTO BICKEL",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 564,
+      "linhaPlanilha": 556,
+      "campos": {
+        "distancia": {
+          "antes": 93.5,
+          "depois": 94
+        },
+        "kmPagamento": {
+          "antes": 93.5,
+          "depois": 94
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "NOELIR DE FATIMA MACHADO KOLLING",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 571,
+      "linhaPlanilha": 563,
+      "campos": {
+        "distancia": {
+          "antes": 64.5,
+          "depois": 65
+        },
+        "kmPagamento": {
+          "antes": 64.5,
+          "depois": 65
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "NOELIR DE FATIMA MACHADO KOLLING",
+      "aviario": " A2",
+      "empresa": "PLUMA",
+      "indiceJson": 573,
+      "linhaPlanilha": 565,
+      "campos": {
+        "distancia": {
+          "antes": 64.5,
+          "depois": 65
+        },
+        "kmPagamento": {
+          "antes": 64.5,
+          "depois": 65
+        }
+      }
+    },
+    {
+      "cliffor": 30069,
+      "produtor": "SIDINEI DICKEL",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 600,
+      "linhaPlanilha": 592,
+      "campos": {
+        "distancia": {
+          "antes": 68.5,
+          "depois": 69
+        },
+        "kmPagamento": {
+          "antes": 68.5,
+          "depois": 69
+        }
+      }
+    },
+    {
+      "cliffor": 30069,
+      "produtor": "SIDINEI DICKEL",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 602,
+      "linhaPlanilha": 594,
+      "campos": {
+        "distancia": {
+          "antes": 68.5,
+          "depois": 69
+        },
+        "kmPagamento": {
+          "antes": 68.5,
+          "depois": 69
+        }
+      }
+    },
+    {
+      "cliffor": 5832357,
+      "produtor": "TATIANE KESIA KAMEI BESAGIO",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 613,
+      "linhaPlanilha": 605,
+      "campos": {
+        "distancia": {
+          "antes": 22.5,
+          "depois": 23
+        },
+        "kmPagamento": {
+          "antes": 22.5,
+          "depois": 23
+        }
+      }
+    },
+    {
+      "cliffor": 5832357,
+      "produtor": "TATIANE KESIA KAMEI BESAGIO",
+      "aviario": " A2",
+      "empresa": "PLUMA",
+      "indiceJson": 614,
+      "linhaPlanilha": 606,
+      "campos": {
+        "distancia": {
+          "antes": 22.5,
+          "depois": 23
+        },
+        "kmPagamento": {
+          "antes": 22.5,
+          "depois": 23
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "VALDECIR LUIZ MANFROI",
+      "aviario": " A3",
+      "empresa": "PLUMA",
+      "indiceJson": 626,
+      "linhaPlanilha": 618,
+      "campos": {
+        "distancia": {
+          "antes": 58.5,
+          "depois": 59
+        },
+        "kmPagamento": {
+          "antes": 58.5,
+          "depois": 59
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "VALDECIR LUIZ MANFROI",
+      "aviario": " A2",
+      "empresa": "PLUMA",
+      "indiceJson": 627,
+      "linhaPlanilha": 619,
+      "campos": {
+        "distancia": {
+          "antes": 58.5,
+          "depois": 59
+        },
+        "kmPagamento": {
+          "antes": 58.5,
+          "depois": 59
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "VALDECIR LUIZ MANFROI",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 628,
+      "linhaPlanilha": 620,
+      "campos": {
+        "distancia": {
+          "antes": 58.5,
+          "depois": 59
+        },
+        "kmPagamento": {
+          "antes": 58.5,
+          "depois": 59
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "VALDIR LANGE",
+      "aviario": " A1",
+      "empresa": "PLUMA",
+      "indiceJson": 634,
+      "linhaPlanilha": 626,
+      "campos": {
+        "distancia": {
+          "antes": 89.5,
+          "depois": 90
+        },
+        "kmPagamento": {
+          "antes": 89.5,
+          "depois": 90
+        }
+      }
+    },
+    {
+      "cliffor": 29901,
+      "produtor": "VALDEMOR VILLA",
+      "aviario": " A2",
+      "empresa": "PLUSVAL",
+      "indiceJson": 637,
+      "linhaPlanilha": 629,
+      "campos": {
+        "distancia": {
+          "antes": 70.5,
+          "depois": 71
+        },
+        "kmPagamento": {
+          "antes": 70.5,
+          "depois": 71
+        }
+      }
+    },
+    {
+      "cliffor": 29901,
+      "produtor": "VALDEMOR VILLA",
+      "aviario": " A1",
+      "empresa": "PLUSVAL",
+      "indiceJson": 639,
+      "linhaPlanilha": 631,
+      "campos": {
+        "distancia": {
+          "antes": 70.5,
+          "depois": 71
+        },
+        "kmPagamento": {
+          "antes": 70.5,
+          "depois": 71
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "MARCELI EHLERT EISEN",
+      "aviario": "A1",
+      "empresa": "PLUMA",
+      "indiceJson": 658,
+      "linhaPlanilha": 650,
+      "campos": {
+        "distancia": {
+          "antes": 105.5,
+          "depois": 106
+        },
+        "kmPagamento": {
+          "antes": 105.5,
+          "depois": 106
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "MARCELI EHLERT EISEN",
+      "aviario": "A2",
+      "empresa": "PLUMA",
+      "indiceJson": 659,
+      "linhaPlanilha": 651,
+      "campos": {
+        "distancia": {
+          "antes": 105.5,
+          "depois": 106
+        },
+        "kmPagamento": {
+          "antes": 105.5,
+          "depois": 106
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "MARCELI EHLERT EISEN",
+      "aviario": "A3",
+      "empresa": "PLUMA",
+      "indiceJson": 660,
+      "linhaPlanilha": 652,
+      "campos": {
+        "distancia": {
+          "antes": 105.5,
+          "depois": 106
+        },
+        "kmPagamento": {
+          "antes": 105.5,
+          "depois": 106
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "MARCELI EHLERT EISEN",
+      "aviario": "A4",
+      "empresa": "PLUMA",
+      "indiceJson": 661,
+      "linhaPlanilha": 653,
+      "campos": {
+        "distancia": {
+          "antes": 105.5,
+          "depois": 106
+        },
+        "kmPagamento": {
+          "antes": 105.5,
+          "depois": 106
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "OSMAR GIMENEZ STRELLING",
+      "aviario": "A1",
+      "empresa": "PLUMA",
+      "indiceJson": 677,
+      "linhaPlanilha": 669,
+      "campos": {
+        "distancia": {
+          "antes": 177.5,
+          "depois": 178
+        },
+        "kmPagamento": {
+          "antes": 177.5,
+          "depois": 178
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "OSMAR GIMENEZ STRELLING",
+      "aviario": "A2",
+      "empresa": "PLUMA",
+      "indiceJson": 678,
+      "linhaPlanilha": 670,
+      "campos": {
+        "distancia": {
+          "antes": 177.5,
+          "depois": 178
+        },
+        "kmPagamento": {
+          "antes": 177.5,
+          "depois": 178
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "LEONARDO PENACHIO GIMENEZ",
+      "aviario": "A1",
+      "empresa": "PLUMA",
+      "indiceJson": 679,
+      "linhaPlanilha": 671,
+      "campos": {
+        "distancia": {
+          "antes": 177.5,
+          "depois": 178
+        },
+        "kmPagamento": {
+          "antes": 177.5,
+          "depois": 178
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "LEONARDO PENACHIO GIMENEZ",
+      "aviario": "A2",
+      "empresa": "PLUMA",
+      "indiceJson": 680,
+      "linhaPlanilha": 672,
+      "campos": {
+        "distancia": {
+          "antes": 177.5,
+          "depois": 178
+        },
+        "kmPagamento": {
+          "antes": 177.5,
+          "depois": 178
+        }
+      }
+    },
+    {
+      "cliffor": null,
+      "produtor": "EDINALDO CAMPANHOLI",
+      "aviario": "A1",
+      "empresa": "PLUMA",
+      "indiceJson": 681,
+      "linhaPlanilha": 673,
+      "campos": {
+        "distancia": {
+          "antes": 177.5,
+          "depois": 178
+        },
+        "kmPagamento": {
+          "antes": 177.5,
+          "depois": 178
+        }
+      }
+    },
+    {
+      "cliffor": 4414799,
+      "produtor": "OSMAR SCHENEIDER",
+      "aviario": "A1",
+      "empresa": "PLUMA",
+      "indiceJson": 707,
+      "linhaPlanilha": 679,
+      "campos": {
+        "distancia": {
+          "antes": 73.5,
+          "depois": 74
+        },
+        "kmPagamento": {
+          "antes": 73.5,
+          "depois": 74
+        }
+      }
+    },
+    {
+      "cliffor": 4414799,
+      "produtor": "OSMAR SCHENEIDER",
+      "aviario": "A2",
+      "empresa": "PLUMA",
+      "indiceJson": 708,
+      "linhaPlanilha": 680,
+      "campos": {
+        "distancia": {
+          "antes": 73.5,
+          "depois": 74
+        },
+        "kmPagamento": {
+          "antes": 73.5,
+          "depois": 74
+        }
+      }
+    },
+    {
+      "cliffor": 4414799,
+      "produtor": "OSMAR SCHENEIDER",
+      "aviario": "A3",
+      "empresa": "PLUMA",
+      "indiceJson": 709,
+      "linhaPlanilha": 681,
+      "campos": {
+        "distancia": {
+          "antes": 73.5,
+          "depois": 74
+        },
+        "kmPagamento": {
+          "antes": 73.5,
+          "depois": 74
+        }
+      }
+    },
+    {
+      "cliffor": 5364663,
+      "produtor": "SERGIO DEPIERI",
+      "aviario": "A1",
+      "empresa": "PLUMA",
+      "indiceJson": 710,
+      "linhaPlanilha": 682,
+      "campos": {
+        "distancia": {
+          "antes": 62.5,
+          "depois": 63
+        },
+        "kmPagamento": {
+          "antes": 62.5,
+          "depois": 63
+        }
+      }
+    },
+    {
+      "cliffor": 5364663,
+      "produtor": "SERGIO DEPIERI",
+      "aviario": "A2",
+      "empresa": "PLUMA",
+      "indiceJson": 711,
+      "linhaPlanilha": 683,
+      "campos": {
+        "distancia": {
+          "antes": 62.5,
+          "depois": 63
+        },
+        "kmPagamento": {
+          "antes": 62.5,
+          "depois": 63
+        }
+      }
+    },
+    {
+      "cliffor": 6173799,
+      "produtor": "JOSE ROSALIN BUCIOLI",
+      "aviario": "A1",
+      "empresa": "PLUMA",
+      "indiceJson": 719,
+      "linhaPlanilha": 690,
+      "campos": {
+        "distancia": {
+          "antes": 63.5,
+          "depois": 64
+        },
+        "kmPagamento": {
+          "antes": 63.5,
+          "depois": 64
+        }
+      }
+    },
+    {
+      "cliffor": 6173799,
+      "produtor": "JOSE ROSALIN BUCIOLI",
+      "aviario": "A2",
+      "empresa": "PLUMA",
+      "indiceJson": 720,
+      "linhaPlanilha": 691,
+      "campos": {
+        "distancia": {
+          "antes": 63.5,
+          "depois": 64
+        },
+        "kmPagamento": {
+          "antes": 63.5,
+          "depois": 64
+        }
+      }
+    },
+    {
+      "cliffor": 6173799,
+      "produtor": "JOSE ROSALIN BUCIOLI",
+      "aviario": "A3",
+      "empresa": "PLUMA",
+      "indiceJson": 721,
+      "linhaPlanilha": 692,
+      "campos": {
+        "distancia": {
+          "antes": 63.5,
+          "depois": 64
+        },
+        "kmPagamento": {
+          "antes": 63.5,
+          "depois": 64
+        }
+      }
+    },
+    {
+      "cliffor": 4276442,
+      "produtor": "ARIETE LEILA KEIBER OSWALD",
+      "aviario": "A1",
+      "empresa": "PLUMA",
+      "indiceJson": 724,
+      "linhaPlanilha": 695,
+      "campos": {
+        "distancia": {
+          "antes": 113.5,
+          "depois": 114
+        },
+        "kmPagamento": {
+          "antes": 113.5,
+          "depois": 114
+        }
+      }
+    },
+    {
+      "cliffor": 4276434,
+      "produtor": "GILBERTO DANIEL OSWALD",
+      "aviario": "A1",
+      "empresa": "PLUMA",
+      "indiceJson": 725,
+      "linhaPlanilha": 696,
+      "campos": {
+        "distancia": {
+          "antes": 113.5,
+          "depois": 114
+        },
+        "kmPagamento": {
+          "antes": 113.5,
+          "depois": 114
+        }
+      }
+    },
+    {
+      "cliffor": 4276434,
+      "produtor": "GILBERTO DANIEL OSWALD",
+      "aviario": "A2",
+      "empresa": "PLUMA",
+      "indiceJson": 726,
+      "linhaPlanilha": 697,
+      "campos": {
+        "distancia": {
+          "antes": 113.5,
+          "depois": 114
+        },
+        "kmPagamento": {
+          "antes": 113.5,
+          "depois": 114
+        }
+      }
+    },
+    {
+      "cliffor": 1354116,
+      "produtor": "CEANDRA CRISTINA DENEGA ZUTTION",
+      "aviario": "A3",
+      "empresa": null,
+      "indiceJson": 727,
+      "linhaPlanilha": 698,
+      "campos": {
+        "distancia": {
+          "antes": 122.5,
+          "depois": 123
+        },
+        "kmPagamento": {
+          "antes": 122.5,
+          "depois": 123
+        }
+      }
+    },
+    {
+      "cliffor": 1354116,
+      "produtor": "CEANDRA CRISTINA DENEGA ZUTTION",
+      "aviario": "A1",
+      "empresa": null,
+      "indiceJson": 728,
+      "linhaPlanilha": 699,
+      "campos": {
+        "distancia": {
+          "antes": 122.5,
+          "depois": 123
+        },
+        "kmPagamento": {
+          "antes": 122.5,
+          "depois": 123
+        }
+      }
+    },
+    {
+      "cliffor": 1354116,
+      "produtor": "CEANDRA CRISTINA DENEGA ZUTTION",
+      "aviario": "A2",
+      "empresa": null,
+      "indiceJson": 734,
+      "linhaPlanilha": 705,
+      "campos": {
+        "distancia": {
+          "antes": 122.5,
+          "depois": 123
+        },
+        "kmPagamento": {
+          "antes": 122.5,
+          "depois": 123
+        }
+      }
+    },
+    {
+      "cliffor": 465658,
+      "produtor": "DARCI GAMBINI",
+      "aviario": "A1",
+      "empresa": null,
+      "indiceJson": 742,
+      "linhaPlanilha": 713,
+      "campos": {
+        "distancia": {
+          "antes": 116.5,
+          "depois": 117
+        },
+        "kmPagamento": {
+          "antes": 116.5,
+          "depois": 117
+        }
+      }
+    }
+  ],
+  "semCorrespondencia": [
+    {
+      "cliffor": 26221,
+      "produtor": "TARCISIO ANESIO ENGELSING",
+      "aviario": " A1",
+      "empresa": "PLUVAL"
+    },
+    {
+      "cliffor": 812145,
+      "produtor": "VICENTE LULLO NETO",
+      "aviario": " A2",
+      "empresa": "PLUVAL"
+    },
+    {
+      "cliffor": 6643,
+      "produtor": "MARIA APARECIDA HAFEMANN DALTOE",
+      "aviario": " A4",
+      "empresa": "PLUVAL"
+    },
+    {
+      "cliffor": 26221,
+      "produtor": "FELIPE GABRIEL LEONARD",
+      "aviario": " A4",
+      "empresa": "PLUVAL"
+    },
+    {
+      "cliffor": 26221,
+      "produtor": "JUCELAINE AVILA DE OLIVEIRA",
+      "aviario": " A1",
+      "empresa": "PLUVAL"
+    },
+    {
+      "cliffor": 26221,
+      "produtor": "JUCELAINE AVILA DE OLIVEIRA",
+      "aviario": " A2",
+      "empresa": "PLUVAL"
+    },
+    {
+      "cliffor": 26221,
+      "produtor": "SERGIO SCANTAMBURLO",
+      "aviario": " A2",
+      "empresa": "PLUVAL"
+    },
+    {
+      "cliffor": 1096923,
+      "produtor": "CIBELI MAZELA DA CRUZ GRANDO",
+      "aviario": " A6",
+      "empresa": "PLUVAL"
+    },
+    {
+      "cliffor": 111058,
+      "produtor": "SERGIO GONSALVES LEITE",
+      "aviario": " A1",
+      "empresa": "PLUVAL"
+    },
+    {
+      "cliffor": 111058,
+      "produtor": "VALDAIR MANFREDI",
+      "aviario": " A1",
+      "empresa": "PLUVAL"
+    },
+    {
+      "cliffor": 111058,
+      "produtor": "ABEL ANGELO DA COSTA CONCEICAO",
+      "aviario": " A1",
+      "empresa": "PLUMA"
+    },
+    {
+      "cliffor": 30072,
+      "produtor": "ANDROW KELVIN GEBAUER",
+      "aviario": " A2",
+      "empresa": "PLUSVAL"
+    },
+    {
+      "cliffor": 1122509,
+      "produtor": "FERNANDO WOLF",
+      "aviario": " A1",
+      "empresa": "PLUSVAL"
+    },
+    {
+      "cliffor": null,
+      "produtor": "341 - PLUSVAL AGROAVICOLA LTDA 06",
+      "aviario": "A1",
+      "empresa": "PLUSVAL"
+    },
+    {
+      "cliffor": null,
+      "produtor": "341 - PLUSVAL AGROAVICOLA LTDA 06",
+      "aviario": "A2",
+      "empresa": "PLUSVAL"
+    },
+    {
+      "cliffor": null,
+      "produtor": "341 - PLUSVAL AGROAVICOLA LTDA 06",
+      "aviario": "A1",
+      "empresa": "PLUSVAL"
+    },
+    {
+      "cliffor": null,
+      "produtor": "341 - PLUSVAL AGROAVICOLA LTDA 06",
+      "aviario": "A2",
+      "empresa": "PLUSVAL"
+    },
+    {
+      "cliffor": null,
+      "produtor": "341 - PLUSVAL AGROAVICOLA LTDA 06",
+      "aviario": "A1",
+      "empresa": "PLUSVAL"
+    },
+    {
+      "cliffor": null,
+      "produtor": "341 - PLUSVAL AGROAVICOLA LTDA 06",
+      "aviario": "A2",
+      "empresa": "PLUSVAL"
+    },
+    {
+      "cliffor": null,
+      "produtor": "341 - PLUSVAL AGROAVICOLA LTDA 06",
+      "aviario": "A1",
+      "empresa": "PLUSVAL"
+    },
+    {
+      "cliffor": null,
+      "produtor": "341 - PLUSVAL AGROAVICOLA LTDA 06",
+      "aviario": "A2",
+      "empresa": "PLUSVAL"
+    },
+    {
+      "cliffor": null,
+      "produtor": "341 - PLUSVAL AGROAVICOLA LTDA 06",
+      "aviario": "A3",
+      "empresa": "PLUSVAL"
+    },
+    {
+      "cliffor": null,
+      "produtor": "341 - PLUSVAL AGROAVICOLA LTDA 06",
+      "aviario": "A1",
+      "empresa": "PLUSVAL"
+    },
+    {
+      "cliffor": null,
+      "produtor": "341 - PLUSVAL AGROAVICOLA LTDA 06",
+      "aviario": "A2",
+      "empresa": "PLUSVAL"
+    },
+    {
+      "cliffor": null,
+      "produtor": "341 - PLUSVAL AGROAVICOLA LTDA 06",
+      "aviario": "A3",
+      "empresa": "PLUSVAL"
+    },
+    {
+      "cliffor": null,
+      "produtor": "341 - PLUSVAL AGROAVICOLA LTDA 06",
+      "aviario": "A1",
+      "empresa": "PLUSVAL"
+    },
+    {
+      "cliffor": null,
+      "produtor": "341 - PLUSVAL AGROAVICOLA LTDA 06",
+      "aviario": "A2",
+      "empresa": "PLUSVAL"
+    },
+    {
+      "cliffor": null,
+      "produtor": "341 - PLUSVAL AGROAVICOLA LTDA 06",
+      "aviario": "A1",
+      "empresa": "PLUSVAL"
+    },
+    {
+      "cliffor": null,
+      "produtor": "341 - PLUSVAL AGROAVICOLA LTDA 06",
+      "aviario": "A1",
+      "empresa": "PLUSVAL"
+    },
+    {
+      "cliffor": null,
+      "produtor": "341 - PLUSVAL AGROAVICOLA LTDA 06",
+      "aviario": "A1",
+      "empresa": "PLUSVAL"
+    },
+    {
+      "cliffor": null,
+      "produtor": "341 - PLUSVAL AGROAVICOLA LTDA 06",
+      "aviario": "A2",
+      "empresa": "PLUSVAL"
+    },
+    {
+      "cliffor": null,
+      "produtor": "341 - PLUSVAL AGROAVICOLA LTDA 06",
+      "aviario": "A1",
+      "empresa": "PLUSVAL"
+    },
+    {
+      "cliffor": null,
+      "produtor": "341 - PLUSVAL AGROAVICOLA LTDA 06",
+      "aviario": "A1",
+      "empresa": "PLUMA"
+    },
+    {
+      "cliffor": null,
+      "produtor": "DIPLOMATA UFAR",
+      "aviario": null,
+      "empresa": "DIPLOMATA"
+    },
+    {
+      "cliffor": 1287346,
+      "produtor": "MARILETE BAREA VILLA",
+      "aviario": "A1",
+      "empresa": null
+    },
+    {
+      "cliffor": 1332201,
+      "produtor": "DIEGO GREGORIO KUNTZ",
+      "aviario": "A2",
+      "empresa": null
+    },
+    {
+      "cliffor": 1332201,
+      "produtor": "DIEGO GREGORIO KUNTZ",
+      "aviario": "A3",
+      "empresa": null
+    },
+    {
+      "cliffor": 1380737,
+      "produtor": "CLEISON ANTONIO PIETRZACK",
+      "aviario": "A1",
+      "empresa": "PLUSVAL"
+    },
+    {
+      "cliffor": 1379828,
+      "produtor": "LEOCIR SIDNEI BORGES MOREIRA",
+      "aviario": "A1",
+      "empresa": null
+    }
+  ],
+  "pendencias": [
+    {
+      "cliffor": 446688,
+      "produtor": "TELMO VENITES",
+      "aviario": "A1",
+      "empresa": null,
+      "motivo": "KM distancia inválido",
+      "valor": "MO",
+      "linha": 711
+    }
+  ],
+  "semAlteracao": 529,
+  "backup": "produtores-km.json.20261007-183721-593332.bak",
+  "aplicado": true
+}
