@@ -1,8 +1,8 @@
 {
-	"MMF": {
+	"SFO": {
         "motorista": "VALDINEI ANDERSON",
         "transportadora": "MARIA ELIZANE",
-        "placa": "SFO9B36"
+        "placa": "SFO9B34"
     },
     "APR": {
         "motorista": "ADRIANO TABORDA",
@@ -115,7 +115,7 @@
         "placa": "AZO8J66"
     },
     "ARU": {
-        "motorista": "CLAUDENIR",
+        "motorista": "VALDECIR",
         "transportadora": "EDVIGES",
         "placa": "ARU8F51"
     },
@@ -170,7 +170,7 @@
         "placa": "BAA4J53"
     },
     "AEN": {
-        "motorista": "CELSO DOS SANTOS",
+        "motorista": "CELSO DOS",
         "transportadora": "TALINI TRANSPORTES",
         "placa": "AEN4A55"
     },

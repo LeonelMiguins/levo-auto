@@ -1,13 +1,4 @@
-extensão-chrome-repom-v2/data/users.json
-extensao-levo-auto/data/users.json
-extensão-chrome-repom-v2/app.zip
-extensao-levo-auto/app.zip
+# ignore
+
 *.exe
 *.zip
-node_modules/
-NFs de BASE/
-.DS_Store
-Thumbs.db
-dados-compartilhados/produtores-km.json.*.bak
-dados-compartilhados/~$*
-dados-compartilhados/__pycache__/
